@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+/* ── Design tokens GOLDEN ──────────────────────────────────────
+   Estratti dai mock-up e fissati nel brief di design.            */
+:root {
+  --ink:          #090B22;  /* fondo dominante          */
+  --ink-800:      #141833;  /* superfici sollevate      */
+  --ivory:        #F7F1E3;  /* fondo chiaro alternativo */
+  --champagne:    #E7D9B4;  /* accento su scuro         */
+  --champagne-dk: #C1AF97;  /* bordi e filetti          */
+  --gold-text:    #8A7345;  /* accento leggibile su bianco */
+  --muted:        #6E7186;
+
+  --font-display: "Noto Serif Display", Georgia, serif;
+  --font-ui: Jost, "Helvetica Neue", Arial, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: #fff;
+  font-family: var(--font-ui);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display { font-family: var(--font-display); font-weight: 400; }
+
+/* Sopratitolo: 12px maiuscolo, tracking largo, champagne */
+.kicker {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .25em;
+  text-transform: uppercase;
+  color: var(--champagne);
+}
+
+/* Etichetta da interfaccia: pulsanti, meta, voci di menu */
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+::selection { background: var(--champagne); color: var(--ink); }
+
+:focus-visible {
+  outline: 2px solid var(--champagne);
+  outline-offset: 3px;
+}

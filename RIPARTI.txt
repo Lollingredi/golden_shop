@@ -1,0 +1,21 @@
+PULIZIA E INSTALLAZIONE PULITA
+==============================
+
+Da PowerShell, dentro C:\Users\redi0\Desktop\Placeholder\golden
+
+  rd /s /q node_modules
+  del package-lock.json
+  rd /s /q .next
+  npm install
+  npm run build
+
+Perche' serve: la cartella node_modules conteneva binari compilati per Linux,
+rimasti da una prova fatta in un ambiente diverso. npm li ha trovati e ha fatto
+un aggiornamento incrementale invece di una installazione pulita, lasciando
+fuori framer-motion e i binari nativi per Windows (lightningcss, swc).
+
+Se PowerShell si lamenta di rd, usa:
+
+  Remove-Item -Recurse -Force node_modules, .next, package-lock.json
+  npm install
+  npm run build
