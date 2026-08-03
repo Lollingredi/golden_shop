@@ -3,6 +3,9 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import QuoteTab from "@/components/QuoteTab";
+import StoreProvider from "@/components/StoreProvider";
+import CartDrawer from "@/components/CartDrawer";
+import { OperatorDialog } from "@/components/Operator";
 
 export const metadata: Metadata = {
   title: {
@@ -32,10 +35,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="pb-[60px] lg:pb-0">
-        <Header />
-        <main>{children}</main>
-        <Footer />
-        <QuoteTab />
+        {/*
+          StoreProvider avvolge tutto: carrello, account e pannello
+          operatore devono essere raggiungibili da qualsiasi pagina.
+          CartDrawer e OperatorDialog sono montati una volta sola qui,
+          non ripetuti pagina per pagina.
+        */}
+        <StoreProvider>
+          <Header />
+          <main>{children}</main>
+          <Footer />
+          <QuoteTab />
+          <CartDrawer />
+          <OperatorDialog />
+        </StoreProvider>
       </body>
     </html>
   );

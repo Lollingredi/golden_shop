@@ -5,6 +5,7 @@ import Reveal, { RevealGrid } from "@/components/Reveal";
 import ProductCard from "@/components/ProductCard";
 import PlaceholderMedia from "@/components/PlaceholderMedia";
 import RequestForm from "@/components/RequestForm";
+import { OperatorPopup } from "@/components/Operator";
 
 const steps = [
   { n: "01", t: "Arrivo", d: "Concordiamo luogo e ora con voi, non con il partner. Alle spalle, tutto è già stato provato." },
@@ -171,6 +172,9 @@ export default async function Home() {
       </section>
 
       <RequestForm />
+
+      {/* Innesco operatore 2 di 4 — popup, una volta per visitatore */}
+      <OperatorPopup contesto="Homepage" />
     </>
   );
 }

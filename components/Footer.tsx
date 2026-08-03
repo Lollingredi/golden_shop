@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { OperatorLink } from "./Operator";
 
 export default function Footer() {
   return (
@@ -12,9 +13,21 @@ export default function Footer() {
             <Link href="/collections/noleggio-auto" className="hover:text-[var(--champagne)] transition-colors">Noleggio auto</Link>
             <Link href="/collections/wedding-planner" className="hover:text-[var(--champagne)] transition-colors">Wedding planner</Link>
             <Link href="/collections/sushi-delivery" className="hover:text-[var(--champagne)] transition-colors">Sushi delivery</Link>
+            <Link href="/account" className="hover:text-[var(--champagne)] transition-colors">Area personale</Link>
             <span>Milano · Bergamo · Monza</span>
             <span>Partner verificati</span>
           </nav>
+        </div>
+
+        {/* Innesco operatore 1 di 4 — sempre a portata, in ogni pagina */}
+        <div className="border-t border-white/10 pt-8 flex flex-wrap gap-6 justify-between items-center">
+          <p className="text-[15px] text-white/70 max-w-[46ch] leading-relaxed">
+            Se una cosa non è chiara, la risposta più veloce è a voce.
+          </p>
+          <OperatorLink
+            contesto="Footer"
+            className="label border border-[var(--champagne)] text-[var(--champagne)] px-8 py-3 hover:bg-[var(--champagne)] hover:text-[var(--ink)] transition-colors duration-200"
+          />
         </div>
 
         <div className="border-t border-white/10 pt-8 flex flex-wrap gap-x-8 gap-y-3 justify-between items-baseline">

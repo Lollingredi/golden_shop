@@ -1,0 +1,391 @@
+"use client";
+
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { FiX, FiPhone, FiMessageCircle, FiClock } from "react-icons/fi";
+import { useAccount, useCart, useOperator } from "./StoreProvider";
+import { STORAGE_KEYS, readStorage, writeStorage } from "@/lib/store";
+
+/* ────────────────────────────────────────────────────────────────
+   "Parla con un operatore" — un solo pannello, quattro inneschi.
+
+   Il pannello (OperatorDialog) è montato una volta sola nel layout.
+   Tutto il resto sono pulsanti che chiamano useOperator().open(contesto).
+   Il contesto è la stringa che l'operatore vedrà per primo: da dove
+   è partita la richiesta.
+
+   I quattro inneschi:
+   1. Footer                  → <OperatorLink /> in components/Footer.tsx
+   2. Popup in homepage       → <OperatorPopup /> in app/page.tsx
+   3. Fine catalogo           → <OperatorBand /> in app/collections/page.tsx
+   4. Fine schermata dettagli → <OperatorBand /> dopo il configuratore
+   ──────────────────────────────────────────────────────────────── */
+
+const TELEFONO = "+39 000 000 0000";
+const TELEFONO_HREF = "tel:+390000000000";
+const WHATSAPP_HREF = "https://wa.me/390000000000";
+
+/** Lun–sab 9–20. Calcolato dopo il montaggio: l'ora del server non conta. */
+function useInLinea(): boolean | null {
+  const [inLinea, setInLinea] = useState<boolean | null>(null);
+  useEffect(() => {
+    const ora = new Date();
+    const giorno = ora.getDay(); // 0 = domenica
+    setInLinea(giorno !== 0 && ora.getHours() >= 9 && ora.getHours() < 20);
+  }, []);
+  return inLinea;
+}
+
+/* ── 1. Il pannello ─────────────────────────────────────────────── */
+
+export function OperatorDialog() {
+  const operator = useOperator();
+  const { account } = useAccount();
+  const reduced = useReducedMotion();
+  const inLinea = useInLinea();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [inviato, setInviato] = useState(false);
+
+  useEffect(() => {
+    if (operator.isOpen) {
+      setInviato(false);
+      panelRef.current?.focus();
+    }
+  }, [operator.isOpen]);
+
+  function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    // Nessun backend: la richiamata si registra e basta.
+    // Con Shopify/CRM qui parte la POST verso l'endpoint di contatto.
+    setInviato(true);
+  }
+
+  return (
+    <AnimatePresence>
+      {operator.isOpen && (
+        <>
+          <motion.div
+            key="op-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            onClick={operator.close}
+            className="fixed inset-0 z-[70] bg-[var(--ink)]/75 backdrop-blur-[2px]"
+            aria-hidden
+          />
+          <motion.div
+            key="op-panel"
+            ref={panelRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Parla con un operatore"
+            initial={reduced ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={reduced ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.98 }}
+            transition={{ duration: reduced ? 0.15 : 0.3, ease: [0, 0, 0.2, 1] }}
+            className="fixed z-[71] inset-x-4 bottom-4 sm:inset-x-auto sm:right-6 sm:bottom-6 sm:w-[420px] max-h-[86vh] overflow-y-auto bg-[var(--ink-800)] border border-white/12 outline-none"
+          >
+            <header className="flex items-start justify-between gap-4 px-7 pt-7">
+              <div>
+                <p className="kicker">Assistenza</p>
+                <h2 className="font-display text-2xl leading-tight mt-2">
+                  Parla con un operatore
+                </h2>
+                {operator.contesto && (
+                  <p className="text-xs text-[var(--muted)] mt-2">
+                    Richiesta da: <span className="text-white/80">{operator.contesto}</span>
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={operator.close}
+                aria-label="Chiudi"
+                className="w-11 h-11 -mr-2 -mt-2 grid place-items-center text-white/60 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+              >
+                <FiX className="w-5 h-5" aria-hidden />
+              </button>
+            </header>
+
+            <div className="px-7 py-6">
+              <p className="flex items-center gap-2 text-xs text-[var(--muted)] mb-6">
+                <FiClock className="w-3.5 h-3.5" aria-hidden />
+                {inLinea === null
+                  ? "Lunedì–sabato, 9:00 – 20:00"
+                  : inLinea
+                    ? "Adesso c'è qualcuno in linea"
+                    : "Fuori orario — lasciate un numero, richiamiamo domani"}
+              </p>
+
+              <div className="grid gap-3 mb-8">
+                <a
+                  href={TELEFONO_HREF}
+                  className="flex items-center gap-4 border border-white/15 px-5 py-4 hover:border-[var(--champagne)] transition-colors group"
+                >
+                  <FiPhone className="w-5 h-5 text-[var(--champagne)] shrink-0" aria-hidden />
+                  <span className="min-w-0">
+                    <span className="block text-[15px]">Chiamate adesso</span>
+                    <span className="block text-xs text-[var(--muted)]">{TELEFONO}</span>
+                  </span>
+                </a>
+                <a
+                  href={WHATSAPP_HREF}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-4 border border-white/15 px-5 py-4 hover:border-[var(--champagne)] transition-colors"
+                >
+                  <FiMessageCircle className="w-5 h-5 text-[var(--champagne)] shrink-0" aria-hidden />
+                  <span className="min-w-0">
+                    <span className="block text-[15px]">Scrivete su WhatsApp</span>
+                    <span className="block text-xs text-[var(--muted)]">
+                      Di solito rispondiamo entro dieci minuti
+                    </span>
+                  </span>
+                </a>
+              </div>
+
+              {inviato ? (
+                <div className="border border-[var(--champagne)]/40 bg-[var(--champagne)]/[0.07] px-5 py-6">
+                  <p className="font-display text-xl leading-tight mb-2">Vi richiamiamo noi.</p>
+                  <p className="text-[14px] leading-relaxed text-white/65">
+                    La richiesta è registrata. Se siamo in orario sentirete
+                    squillare entro un&apos;ora, altrimenti domani in mattinata.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={onSubmit} className="grid gap-4">
+                  <p className="kicker">Oppure fatevi richiamare</p>
+                  <label className="grid gap-2">
+                    <span className="text-xs text-[var(--muted)]">Nome</span>
+                    <input
+                      required
+                      name="nome"
+                      defaultValue={account?.nome ?? ""}
+                      autoComplete="name"
+                      className="bg-transparent border-b border-white/20 pb-2 text-[15px] focus:border-[var(--champagne)] outline-none transition-colors"
+                    />
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-xs text-[var(--muted)]">Telefono</span>
+                    <input
+                      required
+                      type="tel"
+                      name="telefono"
+                      defaultValue={account?.telefono ?? ""}
+                      autoComplete="tel"
+                      className="bg-transparent border-b border-white/20 pb-2 text-[15px] focus:border-[var(--champagne)] outline-none transition-colors"
+                    />
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-xs text-[var(--muted)]">Quando vi fa comodo</span>
+                    <select
+                      name="quando"
+                      className="bg-[var(--ink-800)] border-b border-white/20 pb-2 text-[15px] focus:border-[var(--champagne)] outline-none transition-colors"
+                    >
+                      <option>Appena possibile</option>
+                      <option>In mattinata</option>
+                      <option>Nel pomeriggio</option>
+                      <option>In serata</option>
+                    </select>
+                  </label>
+                  <button
+                    type="submit"
+                    className="mt-2 bg-[var(--champagne)] text-[var(--ink)] label px-8 py-4 hover:bg-white transition-colors"
+                  >
+                    Richiedi una chiamata
+                  </button>
+                  <p className="text-[11px] leading-relaxed text-[var(--muted)]">
+                    Il numero serve solo per questa chiamata. Nessuna newsletter.
+                  </p>
+                </form>
+              )}
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* ── 2. Innesco compatto — footer, carrello, righe di testo ─────── */
+
+export function OperatorLink({
+  contesto,
+  className = "",
+  children = "Parla con un operatore",
+}: {
+  contesto?: string;
+  className?: string;
+  children?: React.ReactNode;
+}) {
+  const operator = useOperator();
+  return (
+    <button
+      type="button"
+      onClick={() => operator.open(contesto)}
+      className={className || "text-xs text-[var(--champagne)] hover:text-white transition-colors"}
+    >
+      {children}
+    </button>
+  );
+}
+
+/* ── 3. Innesco a fascia — fine catalogo, fine dettagli ─────────── */
+
+export function OperatorBand({
+  contesto,
+  titolo = "Non siete sicuri di cosa scegliere?",
+  testo = "Un operatore vi accompagna: conosce le vetture, le date libere e i partner. Cinque minuti al telefono valgono mezz'ora di catalogo.",
+}: {
+  contesto: string;
+  titolo?: string;
+  testo?: string;
+}) {
+  const operator = useOperator();
+  const inLinea = useInLinea();
+
+  return (
+    <section className="px-6 lg:px-10 py-16 lg:py-24 border-t border-white/10">
+      <div className="max-w-[1280px] mx-auto bg-[var(--ink-800)] border border-white/10 px-8 py-12 lg:px-16 lg:py-16 grid gap-8 lg:grid-cols-[1.3fr_auto] lg:items-center">
+        <div>
+          <p className="kicker mb-4 flex items-center gap-3">
+            Assistenza
+            {inLinea && (
+              <span className="inline-flex items-center gap-2 text-[var(--champagne)]">
+                <span className="w-[6px] h-[6px] rounded-full bg-[var(--champagne)]" aria-hidden />
+                in linea adesso
+              </span>
+            )}
+          </p>
+          <h2 className="font-display text-2xl lg:text-[32px] leading-tight mb-4 max-w-[22ch]">
+            {titolo}
+          </h2>
+          <p className="text-[16px] leading-relaxed text-white/60 max-w-[58ch]">{testo}</p>
+        </div>
+        <div className="flex flex-wrap gap-4 lg:justify-end">
+          <button
+            type="button"
+            onClick={() => operator.open(contesto)}
+            className="bg-[var(--champagne)] text-[var(--ink)] label px-10 py-4 hover:bg-white transition-colors"
+          >
+            Parla con un operatore
+          </button>
+          <a
+            href={WHATSAPP_HREF}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border border-[var(--champagne)] text-[var(--champagne)] label px-10 py-4 hover:bg-[var(--champagne)] hover:text-[var(--ink)] transition-colors"
+          >
+            WhatsApp
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── 4. Popup in homepage ───────────────────────────────────────── */
+
+/**
+ * Compare una volta sola per sessione, e solo se l'utente ha dato
+ * segno di stare guardando davvero: 40% di scroll oppure 18 secondi.
+ * Non compare se il carrello o il pannello sono già aperti — coprire
+ * un carrello aperto con un popup è il modo migliore per perdere
+ * l'ordine.
+ */
+export function OperatorPopup({ contesto = "Homepage" }: { contesto?: string }) {
+  const operator = useOperator();
+  const cart = useCart();
+  const reduced = useReducedMotion();
+  const [visibile, setVisibile] = useState(false);
+  const chiusoRef = useRef(false);
+
+  useEffect(() => {
+    if (readStorage<boolean>(STORAGE_KEYS.popup, false)) return;
+
+    let fatto = false;
+    const mostra = () => {
+      if (fatto || chiusoRef.current) return;
+      fatto = true;
+      setVisibile(true);
+    };
+
+    const timer = window.setTimeout(mostra, 18_000);
+    const onScroll = () => {
+      const percorso =
+        window.scrollY / Math.max(1, document.body.scrollHeight - window.innerHeight);
+      if (percorso > 0.4) mostra();
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+
+  function chiudi(perSempre: boolean) {
+    chiusoRef.current = true;
+    setVisibile(false);
+    if (perSempre) writeStorage(STORAGE_KEYS.popup, true);
+  }
+
+  const nascosto = cart.isOpen || operator.isOpen;
+
+  return (
+    <AnimatePresence>
+      {visibile && !nascosto && (
+        <motion.div
+          initial={reduced ? { opacity: 0 } : { opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={reduced ? { opacity: 0 } : { opacity: 0, y: 12 }}
+          transition={{ duration: reduced ? 0.15 : 0.35, ease: [0, 0, 0.2, 1] }}
+          role="complementary"
+          aria-label="Assistenza"
+          className="fixed z-[55] left-4 right-4 bottom-[76px] sm:left-auto sm:right-6 sm:bottom-6 sm:w-[360px] bg-[var(--ink-800)] border border-[var(--champagne)]/35 shadow-2xl"
+        >
+          <button
+            type="button"
+            onClick={() => chiudi(true)}
+            aria-label="Chiudi e non mostrare più"
+            className="absolute top-2 right-2 w-9 h-9 grid place-items-center text-white/50 hover:text-white transition-colors"
+          >
+            <FiX className="w-4 h-4" aria-hidden />
+          </button>
+
+          <div className="px-6 py-6 pr-12">
+            <p className="kicker mb-3">C&apos;è qualcuno</p>
+            <p className="font-display text-xl leading-tight mb-3">
+              Vi serve una mano a scegliere?
+            </p>
+            <p className="text-[14px] leading-relaxed text-white/60 mb-5">
+              Un operatore vero, non un assistente automatico. Vi dice in due
+              minuti cosa è libero nelle vostre date.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  chiudi(true);
+                  operator.open(contesto);
+                }}
+                className="bg-[var(--champagne)] text-[var(--ink)] label px-6 py-3 hover:bg-white transition-colors"
+              >
+                Parla con un operatore
+              </button>
+              <button
+                type="button"
+                onClick={() => chiudi(false)}
+                className="label text-white/50 px-2 py-3 hover:text-white transition-colors"
+              >
+                Più tardi
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}

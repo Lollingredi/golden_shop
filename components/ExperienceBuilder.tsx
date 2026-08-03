@@ -6,6 +6,7 @@ import Image from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { formatAmount } from "@/lib/money";
 import { addons, addonById, packages, packageAddonsPrice } from "@/lib/experiences";
+import { useCart, useOperator } from "./StoreProvider";
 import PlaceholderMedia from "./PlaceholderMedia";
 
 export type BaseOption = {
@@ -27,9 +28,12 @@ export type BaseOption = {
  */
 export default function ExperienceBuilder({ bases }: { bases: BaseOption[] }) {
   const reduced = useReducedMotion();
+  const cart = useCart();
+  const operator = useOperator();
   const [baseHandle, setBaseHandle] = useState(bases[0]?.handle ?? "");
   const [selected, setSelected] = useState<string[]>(["the-reveal", "memories"]);
   const [preset, setPreset] = useState<string | null>("the-big-reveal");
+  const [aggiunto, setAggiunto] = useState(false);
 
   const base = bases.find((b) => b.handle === baseHandle) ?? bases[0];
 
@@ -61,6 +65,27 @@ export default function ExperienceBuilder({ bases }: { bases: BaseOption[] }) {
   const addonsCharged = presetPkg ? packageAddonsPrice(presetPkg) : addonsSum;
   const saving = addonsSum - addonsCharged;
   const total = (base?.price ?? 0) + addonsCharged;
+
+  /**
+   * Il configuratore compone una riga sola: la vettura è il merchandise,
+   * gli add-on sono attributi di riga. Su Shopify diventano
+   * `attributes[]` della CartLine — nessuna ristrutturazione.
+   */
+  function aggiungiAlCarrello() {
+    if (!base) return;
+    cart.add({
+      merchandiseId: `gid://golden/ProductVariant/${base.handle}-1`,
+      kind: presetPkg ? "pacchetto" : "esperienza",
+      title: presetPkg ? presetPkg.title : "Esperienza su misura",
+      subtitle: base.title,
+      imageUrl: base.imageUrl,
+      unitPrice: total,
+      attributes: chosen.map((a) => ({ key: a.title, value: a.contents })),
+      sconto: saving > 0 ? saving : undefined,
+    });
+    setAggiunto(true);
+    window.setTimeout(() => setAggiunto(false), 2200);
+  }
 
   return (
     <div className="grid gap-12 lg:grid-cols-[1fr_380px] lg:gap-16 items-start">
@@ -270,12 +295,26 @@ export default function ExperienceBuilder({ bases }: { bases: BaseOption[] }) {
           da una persona, dopo che ci avete detto data e città.
         </p>
 
+        <button
+          type="button"
+          onClick={aggiungiAlCarrello}
+          className="w-full text-center bg-[var(--champagne)] text-[var(--ink)] label px-8 py-4 hover:bg-white transition-colors duration-200"
+        >
+          {aggiunto ? "Aggiunto al carrello ✓" : "Aggiungi al carrello"}
+        </button>
         <Link
           href="/#richiesta"
-          className="block text-center bg-[var(--champagne)] text-[var(--ink)] label px-8 py-4 hover:bg-white transition-colors duration-200"
+          className="block text-center border border-[var(--champagne)] text-[var(--champagne)] label px-8 py-4 mt-3 hover:bg-[var(--champagne)] hover:text-[var(--ink)] transition-colors duration-200"
         >
-          Richiedi questa esperienza
+          Chiedi un preventivo
         </Link>
+        <button
+          type="button"
+          onClick={() => operator.open("Configuratore noleggio")}
+          className="w-full label text-[var(--champagne)] py-4 mt-1 hover:text-white transition-colors"
+        >
+          Parla con un operatore
+        </button>
       </div>
     </div>
   );

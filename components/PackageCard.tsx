@@ -4,6 +4,7 @@ import { addonById, packageAddonsPrice, packageSaving, type ExperiencePackage } 
 import { formatAmount } from "@/lib/money";
 import PlaceholderMedia from "./PlaceholderMedia";
 import { RevealItem } from "./Reveal";
+import { AddPackageButton } from "./AddToCart";
 
 /**
  * Pacchetto = esperienza preconfigurata.
@@ -12,9 +13,14 @@ import { RevealItem } from "./Reveal";
 export default function PackageCard({
   pkg,
   fromBase,
+  baseTitle,
+  baseHandle,
 }: {
   pkg: ExperiencePackage;
   fromBase: number;
+  /** Vettura di partenza proposta: la meno cara del servizio */
+  baseTitle: string;
+  baseHandle: string;
 }) {
   const addonsPrice = packageAddonsPrice(pkg);
   const saving = packageSaving(pkg);
@@ -78,12 +84,27 @@ export default function PackageCard({
                 vettura inclusa · {formatAmount(saving)} di risparmio sui singoli
               </span>
             </div>
-            <Link
-              href="#configura"
-              className="label border border-[var(--champagne)] text-[var(--champagne)] px-6 py-3 hover:bg-[var(--champagne)] hover:text-[var(--ink)] transition-colors duration-200"
-            >
-              Configura
-            </Link>
+            <div className="flex gap-3">
+              <Link
+                href="#configura"
+                className="label border border-white/25 text-white/80 px-6 py-3 hover:border-white hover:text-white transition-colors duration-200"
+              >
+                Configura
+              </Link>
+              <AddPackageButton
+                merchandiseId={`gid://golden/ProductVariant/${baseHandle}-1`}
+                title={pkg.title}
+                subtitle={baseTitle}
+                imageUrl={pkg.image}
+                unitPrice={fromBase + addonsPrice}
+                sconto={saving}
+                attributes={pkg.addonIds.map((id) => ({
+                  key: addonById.get(id)?.title ?? id,
+                  value: addonById.get(id)?.contents ?? "",
+                }))}
+                className="label bg-[var(--champagne)] text-[var(--ink)] px-6 py-3 hover:bg-white transition-colors duration-200"
+              />
+            </div>
           </div>
         </div>
       </article>

@@ -4,7 +4,8 @@ import { useState, useEffect, useId } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { FiMenu, FiX } from "react-icons/fi";
+import { FiMenu, FiX, FiShoppingBag, FiUser } from "react-icons/fi";
+import { useAccount, useCart } from "./StoreProvider";
 
 /* Hook estratto da sito-corbi: listener passivo, nessun layout thrashing */
 function useScrollPosition(threshold = 20): boolean {
@@ -30,6 +31,8 @@ export default function Header() {
   const scrolled = useScrollPosition(20);
   const pathname = usePathname();
   const menuId = useId();
+  const cart = useCart();
+  const { account } = useAccount();
 
   useEffect(() => setOpen(false), [pathname]);
 
@@ -80,14 +83,34 @@ export default function Header() {
         </Link>
 
         {/* destra */}
-        <div className="flex gap-6 items-center justify-end label text-white/75">
-          <span className="hidden sm:inline">IT</span>
-          <Link href="/collections" className="hidden lg:inline hover:text-[var(--champagne)] transition-colors duration-150">
-            Catalogo
+        <div className="flex gap-2 sm:gap-4 items-center justify-end label text-white/75">
+          <Link
+            href={account ? "/account" : "/account/login"}
+            aria-label={account ? "Area personale" : "Accedi"}
+            className={`w-11 h-11 grid place-items-center hover:text-[var(--champagne)] transition-colors duration-150 ${
+              pathname.startsWith("/account") ? "text-[var(--champagne)]" : ""
+            }`}
+          >
+            <FiUser className="w-[19px] h-[19px]" aria-hidden />
           </Link>
+
+          <button
+            type="button"
+            onClick={cart.open}
+            aria-label={`Carrello, ${cart.count} articoli`}
+            className="relative w-11 h-11 grid place-items-center hover:text-[var(--champagne)] transition-colors duration-150"
+          >
+            <FiShoppingBag className="w-[19px] h-[19px]" aria-hidden />
+            {cart.hydrated && cart.count > 0 && (
+              <span className="absolute top-[6px] right-[4px] min-w-[17px] h-[17px] px-1 rounded-full bg-[var(--champagne)] text-[var(--ink)] text-[10px] font-medium grid place-items-center tabular-nums">
+                {cart.count}
+              </span>
+            )}
+          </button>
+
           <Link
             href="/#richiesta"
-            className="border border-[var(--champagne)] text-[var(--champagne)] px-6 py-[11px] leading-none hover:bg-[var(--champagne)] hover:text-[var(--ink)] transition-colors duration-200"
+            className="hidden sm:inline border border-[var(--champagne)] text-[var(--champagne)] px-6 py-[11px] leading-none hover:bg-[var(--champagne)] hover:text-[var(--ink)] transition-colors duration-200"
           >
             Richiedi
           </Link>
@@ -104,7 +127,7 @@ export default function Header() {
             transition={{ duration: 0.2, ease: "easeOut" }}
             className="lg:hidden bg-[var(--ink)]/98 backdrop-blur-md border-t border-white/10 px-6 py-5 flex flex-col"
           >
-            {links.map((l) => (
+            {[...links, { label: account ? "Area personale" : "Accedi", href: account ? "/account" : "/account/login" }].map((l) => (
               <Link
                 key={l.href}
                 href={l.href}

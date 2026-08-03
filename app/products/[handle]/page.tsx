@@ -10,6 +10,8 @@ import { formatMoney, fromPrice } from "@/lib/money";
 import Reveal, { RevealGrid } from "@/components/Reveal";
 import ProductCard from "@/components/ProductCard";
 import PlaceholderMedia from "@/components/PlaceholderMedia";
+import { AddProductButton } from "@/components/AddToCart";
+import { OperatorLink } from "@/components/Operator";
 
 type Params = { params: Promise<{ handle: string }> };
 
@@ -99,16 +101,32 @@ export default async function ProductPage({ params }: Params) {
               </div>
             </fieldset>
 
-            <div className="flex flex-wrap gap-4 mb-10">
-              <Link href="/#richiesta"
-                className="bg-[var(--champagne)] text-[var(--ink)] label px-10 py-4 hover:bg-white transition-colors duration-200">
-                Richiedi disponibilità
-              </Link>
+            <div className="flex flex-wrap gap-4 mb-4">
+              <AddProductButton
+                merchandiseId={product.variants[0].id}
+                title={product.title}
+                subtitle={product.variants[0].title}
+                imageUrl={img?.url ?? null}
+                unitPrice={Number(product.priceRange.minVariantPrice.amount)}
+              />
               <Link href="/#richiesta"
                 className="border border-[var(--champagne)] text-[var(--champagne)] label px-10 py-4 hover:bg-[var(--champagne)] hover:text-[var(--ink)] transition-colors duration-200">
-                Parla con un esperto
+                Richiedi disponibilità
               </Link>
             </div>
+            <OperatorLink
+              contesto={product.title}
+              className="label text-[var(--champagne)] py-4 mb-6 hover:text-white transition-colors"
+            />
+            {colHandle === "noleggio-auto" && (
+              <p className="text-sm leading-relaxed text-white/60 mb-10 border-l border-[var(--champagne)]/40 pl-4">
+                Questa è la base.{" "}
+                <Link href="/collections/noleggio-auto#configura" className="text-[var(--champagne)] hover:text-white transition-colors">
+                  Nel configuratore
+                </Link>{" "}
+                ci aggiungete rivelazione, fotografo, fiori e brindisi.
+              </p>
+            )}
 
             <dl className="grid gap-3 text-sm border-t border-white/10 pt-6">
               {m.citta && (

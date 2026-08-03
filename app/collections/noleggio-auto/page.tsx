@@ -8,6 +8,7 @@ import ProductCard from "@/components/ProductCard";
 import PackageCard from "@/components/PackageCard";
 import ExperienceBuilder, { type BaseOption } from "@/components/ExperienceBuilder";
 import RequestForm from "@/components/RequestForm";
+import { OperatorBand } from "@/components/Operator";
 
 /* ────────────────────────────────────────────────────────────────
    Pagina dedicata al servizio noleggio.
@@ -70,7 +71,9 @@ export default async function NoleggioAutoPage() {
     durata: p.metafields.durata,
   }));
 
-  const fromBase = Math.min(...bases.map((b) => b.price));
+  /** Vettura di partenza dei pacchetti: la meno cara del servizio */
+  const baseEconomica = bases.reduce((min, b) => (b.price < min.price ? b : min), bases[0]);
+  const fromBase = baseEconomica.price;
 
   return (
     <>
@@ -152,7 +155,13 @@ export default async function NoleggioAutoPage() {
           </Reveal>
           <RevealGrid className="grid gap-6 lg:grid-cols-2">
             {packages.map((pkg) => (
-              <PackageCard key={pkg.id} pkg={pkg} fromBase={fromBase} />
+              <PackageCard
+                key={pkg.id}
+                pkg={pkg}
+                fromBase={fromBase}
+                baseTitle={baseEconomica.title}
+                baseHandle={baseEconomica.handle}
+              />
             ))}
           </RevealGrid>
         </div>
@@ -179,6 +188,14 @@ export default async function NoleggioAutoPage() {
           </Reveal>
         </div>
       </section>
+
+      {/* Innesco operatore 4 di 4 — subito dopo la scelta degli add-on,
+          dove nascono le domande vere: si può fare, in quella data? */}
+      <OperatorBand
+        contesto="Dettaglio noleggio — add-on"
+        titolo="Una domanda sull'allestimento vale una telefonata."
+        testo="Si può fare la rivelazione in quel cortile? Il fotografo può restare fino a mezzanotte? La torta regge il caldo di agosto? Un operatore risponde in due minuti, e conosce già i partner."
+      />
 
       {/* ── Le vetture: la base, dopo l'esperienza ────────────────── */}
       <section className="px-6 lg:px-10 py-20 lg:py-28">

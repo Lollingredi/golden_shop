@@ -5,6 +5,7 @@ import { getCollections, getProductsInCollection } from "@/lib/catalog";
 import Reveal, { RevealGrid } from "@/components/Reveal";
 import ProductCard from "@/components/ProductCard";
 import PlaceholderMedia from "@/components/PlaceholderMedia";
+import { OperatorBand } from "@/components/Operator";
 
 export const metadata: Metadata = {
   title: "Catalogo",
@@ -77,6 +78,13 @@ export default async function CollectionsIndex() {
           </div>
         </section>
       ))}
+
+      {/* Innesco operatore 3 di 4 — in fondo al catalogo */}
+      <OperatorBand
+        contesto="Catalogo"
+        titolo="Tre servizi e quindici proposte sono tante da soppesare da soli."
+        testo="Dite a un operatore la data, la città e l'occasione: vi rimanda due o tre nomi invece di quindici. È il modo più rapido di uscire dal catalogo."
+      />
     </>
   );
 }
