@@ -1,4 +1,4 @@
-# GOLDEN — account, carrello, checkout, operatore
+# GOLDEN — account, carrello, checkout, concierge
 
 Come funzionano le quattro funzioni aggiunte, dove stanno nel codice e cosa
 cambia il giorno in cui arriva Shopify.
@@ -39,10 +39,10 @@ al caricamento di ogni pagina.
 | File | Cosa contiene |
 |---|---|
 | `lib/store.ts` | Forme dati, chiavi di storage, calcolo totali, acconto |
-| `components/StoreProvider.tsx` | I tre stati: carrello, account, operatore |
+| `components/StoreProvider.tsx` | I tre stati: carrello, account, concierge |
 | `components/CartDrawer.tsx` | Il pannello a scorrimento |
 | `components/AddToCart.tsx` | I pulsanti che riempiono il carrello |
-| `components/Operator.tsx` | Pannello operatore + i suoi quattro inneschi |
+| `components/Operator.tsx` | Pannello concierge + i suoi quattro inneschi |
 | `app/account/login/page.tsx` | Accesso |
 | `app/account/page.tsx` | Area personale |
 | `app/checkout/page.tsx` | Conferma in tre passi |
@@ -69,7 +69,7 @@ login. L'area personale ha tre blocchi:
 con codice (`GLD-xxxxx`), data, città, righe dell'ordine, totale e stato — *In
 lavorazione*, *Confermata*, *Conclusa*. Oggi lo stato resta sempre il primo,
 perché non c'è nessuno che lo cambi. Ogni scheda ha il suo "Parla con un
-operatore", che apre il pannello già sapendo di quale richiesta si tratta.
+concierge", che apre il pannello già sapendo di quale richiesta si tratta.
 
 **Esperienze salvate.** Elenco dei pacchetti tenuti da parte
 (`toggleSalvato`). L'aggancio è pronto; il cuoricino sulle schede non l'ho
@@ -178,7 +178,7 @@ subito dopo.
 3. Nasce una `Richiesta` con codice e data, in testa all'elenco.
 4. **Il carrello si svuota.**
 5. Compare la schermata di esito, con il codice e due strade: vedere la
-   richiesta, o parlare con un operatore.
+   richiesta, o parlare con un concierge.
 
 Se qualcuno arriva su `/checkout` con il carrello vuoto trova una schermata
 dedicata che lo rimanda ai pacchetti, non un modulo vuoto.
@@ -190,19 +190,19 @@ I passi 1 e 2 riempiono `buyerIdentity` e gli `attributes` del Cart. Il passo
 
 - **incasso immediato** → redirect a `cart.checkoutUrl`, Shopify fa il resto;
 - **preventivo** (più aderente a come lavorate) → si crea una **DraftOrder**,
-  l'operatore la conferma e Shopify manda al cliente il link di pagamento
+  il concierge la conferma e Shopify manda al cliente il link di pagamento
   dell'acconto.
 
 ---
 
-## 4. "Parla con un operatore"
+## 4. "Parla con un concierge"
 
 ### Un pannello solo, quattro inneschi
 
 Il pannello (`OperatorDialog`) è montato una volta nel layout. Tutto il resto
 sono pulsanti che chiamano `useOperator().open(contesto)`. **Il contesto è la
-cosa importante**: è la stringa che l'operatore vedrà per prima, cioè da dove
-è partita la richiesta. Un operatore che sa già che state guardando *The Big
+cosa importante**: è la stringa che il concierge vedrà per prima, cioè da dove
+è partita la richiesta. Un concierge che sa già che state guardando *The Big
 Reveal* parte con dieci minuti di vantaggio.
 
 | # | Dove | Contesto passato | Comportamento |
@@ -223,8 +223,8 @@ Tre regole:
 
 - **Non compare subito.** Serve un segno che la persona stia guardando
   davvero: 40% di scroll, oppure 18 secondi sulla pagina.
-- **Una volta sola.** "Chiudi" o "Parla con un operatore" lo spengono per
-  sempre su quel dispositivo (`golden.popup-operatore.v1`); "Più tardi" lo
+- **Una volta sola.** "Chiudi" o "Parla con un concierge" lo spengono per
+  sempre su quel dispositivo (`golden.popup-concierge.v1`); "Più tardi" lo
   spegne solo per quella visita.
 - **Non copre mai niente.** Se il carrello o il pannello sono aperti, il popup
   si nasconde. Coprire un carrello aperto con un popup è il modo migliore di

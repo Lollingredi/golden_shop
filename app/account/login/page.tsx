@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAccount } from "@/components/StoreProvider";
 import Reveal from "@/components/Reveal";
+import { Bottone } from "@/components/Bottone";
 
 /* ────────────────────────────────────────────────────────────────
    Accesso — oggi simulato.
@@ -23,6 +24,12 @@ export default function LoginPage() {
   const router = useRouter();
   const [passo, setPasso] = useState<"email" | "codice">("email");
   const [email, setEmail] = useState("");
+  /* Il codice ha uno stato suo: senza, l'input restava non controllato e
+     React — che vede due <input> nella stessa posizione dell'albero —
+     riusava lo stesso nodo del DOM. Risultato: l'email restava dentro il
+     campo delle sei cifre, spaziata a 0.4em. Il `key` sul form rende la
+     sostituzione esplicita. */
+  const [codice, setCodice] = useState("");
   const [errore, setErrore] = useState<string | null>(null);
 
   /* Già dentro: si va all'area personale */
@@ -37,36 +44,57 @@ export default function LoginPage() {
       return;
     }
     setErrore(null);
+    setCodice("");
     setPasso("codice");
   }
 
   function verificaCodice(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!/^\d{6}$/.test(codice)) {
+      setErrore("Il codice è di sei cifre.");
+      return;
+    }
     // Simulazione: qualsiasi codice di sei cifre va bene.
+    setErrore(null);
     login(email);
     router.push("/account");
   }
 
+  function tornaAllEmail() {
+    setCodice("");
+    setErrore(null);
+    setPasso("email");
+  }
+
   return (
-    <section className="px-6 lg:px-10 pt-[140px] lg:pt-[180px] pb-24 min-h-[80vh]">
+    <section className="zona-chiara pagina-top px-6 lg:px-10 pb-24 min-h-[80vh]">
       <div className="max-w-[420px] mx-auto">
         <Reveal>
           <p className="kicker mb-6">Area personale</p>
-          <h1 className="font-display text-[clamp(30px,4.4vw,42px)] leading-tight mb-4">
+          <h1 className="h-pagina mb-4">
             {passo === "email" ? "Entrate con la vostra email." : "Controllate la posta."}
           </h1>
-          <p className="text-[16px] leading-relaxed text-white/60 mb-12">
-            {passo === "email"
-              ? "Nessuna password da ricordare: vi mandiamo un codice a sei cifre e siete dentro."
-              : `Abbiamo mandato un codice a ${email}. Arriva entro un minuto.`}
-          </p>
+          {passo === "email" ? (
+            <p className="text-[16px] leading-relaxed text-[var(--t2)] mb-12">
+              Nessuna password da ricordare: vi mandiamo un codice a sei cifre e
+              siete dentro.
+            </p>
+          ) : (
+            /* L'email va a capo su una riga sua: gli indirizzi lunghi
+               sfondavano la colonna da 420px. */
+            <p className="text-[16px] leading-relaxed text-[var(--t2)] mb-12">
+              Abbiamo mandato un codice a{" "}
+              <span className="block break-all text-[var(--t1)] mt-1">{email}</span>
+              <span className="block mt-1">Arriva entro un minuto.</span>
+            </p>
+          )}
         </Reveal>
 
         <Reveal delay={0.08}>
           {passo === "email" ? (
-            <form onSubmit={inviaEmail} className="grid gap-8">
+            <form key="form-email" onSubmit={inviaEmail} className="grid gap-8">
               <label className="grid gap-3">
-                <span className="kicker">Email</span>
+                <span className="campo-etichetta">Email</span>
                 <input
                   autoFocus
                   required
@@ -76,61 +104,57 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="nome@esempio.it"
-                  className="bg-transparent border-b border-[var(--champagne)]/40 pb-4 text-[17px] placeholder:text-white/25 focus:border-[var(--champagne)] outline-none transition-colors"
+                  className="bg-transparent border-b border-[var(--champagne)]/40 pb-4 text-[17px] placeholder:text-[var(--t4)] focus:border-[var(--champagne)] outline-none transition-colors"
                 />
               </label>
               {errore && <p className="text-[14px] text-[var(--champagne)]">{errore}</p>}
-              <button
-                type="submit"
-                className="justify-self-start bg-[var(--champagne)] text-[var(--ink)] label px-10 py-4 hover:bg-white transition-colors"
-              >
+              <Bottone type="submit" className="justify-self-start">
                 Ricevi il codice
-              </button>
+              </Bottone>
             </form>
           ) : (
-            <form onSubmit={verificaCodice} className="grid gap-8">
+            <form key="form-codice" onSubmit={verificaCodice} className="grid gap-8">
               <label className="grid gap-3">
-                <span className="kicker">Codice a sei cifre</span>
+                <span className="campo-etichetta">Codice a sei cifre</span>
                 <input
                   autoFocus
                   required
+                  type="text"
                   inputMode="numeric"
                   pattern="[0-9]{6}"
                   maxLength={6}
                   name="codice"
                   autoComplete="one-time-code"
                   placeholder="000000"
-                  className="bg-transparent border-b border-[var(--champagne)]/40 pb-4 text-[24px] tracking-[0.4em] placeholder:text-white/20 focus:border-[var(--champagne)] outline-none transition-colors"
+                  value={codice}
+                  /* Si accettano solo cifre: incollando "1 2 3 4 5 6" o un
+                     codice con trattini il campo resta pulito. */
+                  onChange={(e) => setCodice(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  className="bg-transparent border-b border-[var(--champagne)]/40 pb-4 text-[24px] tracking-[0.4em] placeholder:text-[var(--t4)] focus:border-[var(--champagne)] outline-none transition-colors"
                 />
               </label>
+              {errore && <p className="text-[14px] text-[var(--champagne)] -mt-4">{errore}</p>}
               <p className="text-xs text-[var(--muted)] -mt-4">
                 Versione dimostrativa: va bene qualsiasi sequenza di sei cifre.
               </p>
               <div className="flex flex-wrap gap-4 items-center">
-                <button
-                  type="submit"
-                  className="bg-[var(--champagne)] text-[var(--ink)] label px-10 py-4 hover:bg-white transition-colors"
-                >
+                <Bottone type="submit" className="justify-self-start">
                   Entra
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPasso("email")}
-                  className="label text-white/50 hover:text-white transition-colors"
-                >
+                </Bottone>
+                <Bottone type="button" onClick={tornaAllEmail} aspetto="tenue">
                   Cambia email
-                </button>
+                </Bottone>
               </div>
             </form>
           )}
         </Reveal>
 
         <Reveal delay={0.16}>
-          <p className="text-xs leading-relaxed text-[var(--muted)] mt-16 border-t border-white/10 pt-8">
+          <p className="text-xs leading-relaxed text-[var(--muted)] mt-16 border-t border-[var(--l1)] pt-8">
             L&apos;area personale serve a ritrovare le richieste, le esperienze
             salvate e i dati di consegna. Non è obbligatoria: si può prenotare
             anche senza account.{" "}
-            <Link href="/collections" className="text-[var(--champagne)] hover:text-white transition-colors">
+            <Link href="/collections" className="text-[var(--champagne)] hover:text-[var(--t1)] transition-colors">
               Torna al catalogo
             </Link>
           </p>

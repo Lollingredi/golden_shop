@@ -46,28 +46,29 @@ export default async function CollectionPage({ params }: Params) {
           <div className="absolute inset-0"><PlaceholderMedia label={`apertura — ${collection.title.toLowerCase()}`} /></div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--ink)] via-[var(--ink)]/55 to-[var(--ink)]/25" />
-        <div className="relative w-full max-w-[1280px] mx-auto">
-          <Reveal y={16}><p className="kicker mb-6">{collection.kicker}</p></Reveal>
-          <Reveal y={24} delay={0.08}>
-            <h1 className="font-display text-[clamp(40px,6.4vw,72px)] leading-[1.05] max-w-[16ch]">
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--ink)]/80 via-[var(--ink)]/35 to-transparent" />
+        <div className="relative w-full contenuto">
+          <Reveal immediato y={16}><p className="kicker mb-6">{collection.kicker}</p></Reveal>
+          <Reveal immediato y={24} delay={0.08}>
+            <h1 className="h-hero max-w-[16ch]">
               {collection.title}
             </h1>
           </Reveal>
         </div>
       </section>
 
-      <section className="px-6 lg:px-10 py-16 lg:py-24">
-        <div className="max-w-[1280px] mx-auto grid gap-10 lg:grid-cols-[1fr_1.2fr] lg:gap-24">
-          <Reveal><h2 className="font-display text-2xl lg:text-3xl leading-tight">{collection.description}</h2></Reveal>
-          <Reveal delay={0.1}><p className="text-[17px] leading-relaxed text-white/70 max-w-[62ch]">{collection.intro}</p></Reveal>
+      <section className="sezione-stretta">
+        <div className="contenuto grid gap-10 lg:grid-cols-[1fr_1.2fr] lg:gap-24">
+          <Reveal><h2 className="h-sezione">{collection.description}</h2></Reveal>
+          <Reveal delay={0.1}><p className="text-[17px] leading-relaxed text-[var(--t2)] max-w-[62ch]">{collection.intro}</p></Reveal>
         </div>
       </section>
 
       <section className="px-6 lg:px-10 pb-20 lg:pb-[120px]">
-        <div className="max-w-[1280px] mx-auto">
+        <div className="contenuto">
           <Reveal>
             <p className="kicker mb-6">{products.length} proposte</p>
-            <h2 className="font-display text-3xl lg:text-[40px] leading-tight mb-16">Il catalogo del servizio.</h2>
+            <h2 className="h-sezione mb-16">Il catalogo del servizio.</h2>
           </Reveal>
           <RevealGrid className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {products.map((p) => <ProductCard key={p.handle} product={p} />)}
@@ -75,7 +76,7 @@ export default async function CollectionPage({ params }: Params) {
         </div>
       </section>
 
-      <RequestForm />
+      <RequestForm origine={`Modulo — ${collection.title}`} />
     </>
   );
 }

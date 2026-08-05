@@ -63,11 +63,21 @@ export type Richiesta = {
   id: string;
   /** ISO date */
   createdAt: string;
+  /**
+   * Righe del carrello. Vuoto quando la richiesta nasce dal modulo
+   * libero invece che dal checkout: in quel caso vale `oggetto`.
+   */
   lines: CartLine[];
   totale: number;
+  /** Cosa hanno chiesto, a parole. Solo per le richieste libere. */
+  oggetto?: string;
   data?: string;
   citta?: string;
   note?: string;
+  /** Da dove è partita: "Checkout", "Modulo — Homepage"… */
+  origine?: string;
+  /** Importo già incassato: al checkout è l'intero totale */
+  pagato?: number;
   stato: "In lavorazione" | "Confermata" | "Conclusa";
 };
 
@@ -95,15 +105,11 @@ export function cartCount(lines: CartLine[]): number {
   return lines.reduce((s, l) => s + l.quantity, 0);
 }
 
-/**
- * Acconto richiesto alla conferma. Il saldo si regola con il partner.
- * Cambiarlo qui lo cambia in tutto il sito.
- */
-export const ACCONTO = 0.3;
-
-export function acconto(totale: number): number {
-  return Math.round(totale * ACCONTO);
-}
+/* Niente acconto: al checkout si paga l'intero importo del servizio.
+   Prima c'erano ACCONTO (30%) e acconto(totale); il saldo si regolava
+   con il partner il giorno del servizio. Rimossi di proposito — se un
+   giorno tornasse la formula ad acconto, va rimessa qui e da nessun'altra
+   parte. */
 
 /* ── localStorage con guardie ───────────────────────────────────── */
 

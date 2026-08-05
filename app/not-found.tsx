@@ -1,15 +1,16 @@
-import Link from "next/link";
+import { BottoneLink } from "@/components/Bottone";
 
 export default function NotFound() {
   return (
-    <section className="min-h-[70vh] grid place-items-center px-6 text-center">
+    /* pagina-top: senza, il blocco centrato in 70vh finisce otticamente
+       basso sotto l'header fisso */
+    <section className="pagina-top min-h-[70vh] grid place-items-center px-6 pb-24 text-center">
       <div>
         <p className="kicker mb-6">Errore 404</p>
-        <h1 className="font-display text-4xl lg:text-5xl mb-8">Questa pagina non esiste.</h1>
-        <Link href="/collections"
-          className="label border border-[var(--champagne)] text-[var(--champagne)] px-8 py-4 inline-block hover:bg-[var(--champagne)] hover:text-[var(--ink)] transition-colors duration-200">
+        <h1 className="h-pagina mb-8">Questa pagina non esiste.</h1>
+        <BottoneLink href="/collections" aspetto="contorno">
           Vai al catalogo
-        </Link>
+        </BottoneLink>
       </div>
     </section>
   );

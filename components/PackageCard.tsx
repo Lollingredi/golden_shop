@@ -30,7 +30,7 @@ export default function PackageCard({
     <RevealItem className="h-full">
       <article
         className={`h-full flex flex-col border ${
-          pkg.evidenza ? "border-[var(--champagne)]" : "border-white/12"
+          pkg.evidenza ? "border-[var(--champagne)]" : "border-[var(--l1)]"
         }`}
       >
         <div className="relative aspect-[16/9] overflow-hidden bg-[var(--ink-800)]">
@@ -52,7 +52,7 @@ export default function PackageCard({
             </span>
           )}
           <div className="absolute bottom-0 left-0 right-0 p-7">
-            <h3 className="font-display text-[28px] leading-tight">{pkg.title}</h3>
+            <h3 className="h-blocco">{pkg.title}</h3>
             <p className="text-[15px] text-[var(--champagne)] mt-1">{pkg.claim}</p>
           </div>
         </div>
@@ -64,7 +64,7 @@ export default function PackageCard({
                 key={c}
                 className={`text-xs px-3 py-[6px] border ${
                   i === 0
-                    ? "border-white/25 text-white/70"
+                    ? "border-[var(--l2)] text-[var(--t2)]"
                     : "border-[var(--champagne)]/40 text-[var(--champagne)]"
                 }`}
               >
@@ -73,24 +73,20 @@ export default function PackageCard({
             ))}
           </ul>
 
-          <p className="text-[15px] leading-relaxed text-white/65 mb-8">{pkg.description}</p>
+          <p className="text-[15px] leading-relaxed text-[var(--t2)] mb-8">{pkg.description}</p>
 
-          <div className="mt-auto pt-6 border-t border-white/10 flex flex-wrap gap-4 justify-between items-baseline">
+          <div className="mt-auto pt-6 border-t border-[var(--l1)] grid gap-5">
+            {/* Stesso trattamento del prezzo di ProductCard: display, champagne,
+                riga sua, metadati sotto in muted. */}
             <div>
-              <span className="block text-[var(--champagne)] font-display text-2xl">
+              <p className="font-display text-xl text-[var(--champagne)]">
                 da {formatAmount(fromBase + addonsPrice)}
-              </span>
-              <span className="text-xs text-[var(--muted)]">
+              </p>
+              <p className="mt-1 text-xs text-[var(--muted)]">
                 vettura inclusa · {formatAmount(saving)} di risparmio sui singoli
-              </span>
+              </p>
             </div>
-            <div className="flex gap-3">
-              <Link
-                href="#configura"
-                className="label border border-white/25 text-white/80 px-6 py-3 hover:border-white hover:text-white transition-colors duration-200"
-              >
-                Configura
-              </Link>
+            <div className="flex flex-wrap gap-x-6 gap-y-3 items-center">
               <AddPackageButton
                 merchandiseId={`gid://golden/ProductVariant/${baseHandle}-1`}
                 title={pkg.title}
@@ -102,8 +98,14 @@ export default function PackageCard({
                   key: addonById.get(id)?.title ?? id,
                   value: addonById.get(id)?.contents ?? "",
                 }))}
-                className="label bg-[var(--champagne)] text-[var(--ink)] px-6 py-3 hover:bg-white transition-colors duration-200"
               />
+              {/* Azione secondaria: testo, non un secondo pulsante */}
+              <Link
+                href="#configura"
+                className="label text-[var(--t2)] border-b border-[var(--l2)] pb-1 hover:text-[var(--t1)] hover:border-[var(--l3)] transition-colors duration-200"
+              >
+                Cambia vettura
+              </Link>
             </div>
           </div>
         </div>

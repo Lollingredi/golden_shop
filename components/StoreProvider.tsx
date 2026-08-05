@@ -25,10 +25,10 @@ import {
 
 /* ────────────────────────────────────────────────────────────────
    Un solo provider per tre stati che si parlano fra loro:
-   carrello, account, operatore.
+   carrello, account, concierge.
 
    Sta tutto qui perché sono tre cose che si intrecciano: il checkout
-   legge il carrello e scrive nell'account, il popup operatore deve
+   legge il carrello e scrive nell'account, il popup concierge deve
    sapere se il carrello è aperto per non coprirlo.
 
    IDRATAZIONE — importante
@@ -49,7 +49,10 @@ type CartApi = {
   isOpen: boolean;
   open: () => void;
   close: () => void;
-  add: (line: Omit<CartLine, "id" | "quantity"> & { quantity?: number }) => void;
+  /** `apri: false` per le griglie: il pannello coprirebbe ciò da cui si sta scegliendo */
+  add: (
+    line: Omit<CartLine, "id" | "quantity"> & { quantity?: number; apri?: boolean }
+  ) => void;
   setQuantity: (id: string, q: number) => void;
   remove: (id: string) => void;
   clear: () => void;
@@ -63,7 +66,10 @@ type AccountApi = {
   login: (email: string, nome?: string) => void;
   logout: () => void;
   update: (patch: Partial<Account>) => void;
-  registraRichiesta: (r: Omit<Richiesta, "id" | "createdAt" | "stato">) => Richiesta;
+  /** `stato` è opzionale: le richieste pagate al checkout nascono già confermate */
+  registraRichiesta: (
+    r: Omit<Richiesta, "id" | "createdAt" | "stato"> & { stato?: Richiesta["stato"] }
+  ) => Richiesta;
   toggleSalvato: (handle: string) => void;
 };
 
@@ -131,7 +137,7 @@ export default function StoreProvider({ children }: { children: ReactNode }) {
     if (hydrated) writeStorage(STORAGE_KEYS.salvati, salvati);
   }, [salvati, hydrated]);
 
-  /* Esc chiude il pannello che è aperto — prima l'operatore, poi il carrello */
+  /* Esc chiude il pannello che è aperto — prima il concierge, poi il carrello */
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key !== "Escape") return;
@@ -153,9 +159,9 @@ export default function StoreProvider({ children }: { children: ReactNode }) {
 
   /* ── Carrello ─────────────────────────────────────────────────── */
 
-  const add = useCallback<CartApi["add"]>((incoming) => {
+  const add = useCallback<CartApi["add"]>(({ apri = true, quantity, ...incoming }) => {
     const id = lineKey(incoming.merchandiseId, incoming.attributes);
-    const q = incoming.quantity ?? 1;
+    const q = quantity ?? 1;
     setLines((prev) => {
       const esistente = prev.find((l) => l.id === id);
       if (esistente) {
@@ -163,7 +169,10 @@ export default function StoreProvider({ children }: { children: ReactNode }) {
       }
       return [...prev, { ...incoming, id, quantity: q }];
     });
-    setCartOpen(true);
+    /* Dal configuratore e dalla scheda prodotto il pannello si apre: è la
+       conferma. Dalle griglie no — coprirebbe la griglia da cui si sta
+       ancora scegliendo, e per aggiungere il secondo bisognerebbe chiudere. */
+    if (apri) setCartOpen(true);
   }, []);
 
   const setQuantity = useCallback<CartApi["setQuantity"]>((id, q) => {
@@ -202,7 +211,7 @@ export default function StoreProvider({ children }: { children: ReactNode }) {
       ...r,
       id: makeId("GLD"),
       createdAt: new Date().toISOString(),
-      stato: "In lavorazione",
+      stato: r.stato ?? "In lavorazione",
     };
     setRichieste((prev) => [nuova, ...prev]);
     return nuova;
@@ -220,7 +229,10 @@ export default function StoreProvider({ children }: { children: ReactNode }) {
             ? prev
             : {
                 email,
-                nome: nome ?? email.split("@")[0].replace(/[._-]+/g, " "),
+                /* Il nome si ricava dall'email solo se ne ha la forma:
+                   "mario.rossi@" → "mario rossi", ma "redibako18@" no,
+                   perché finirebbe a 48px in cima all'area personale. */
+                nome: nome ?? nomeDaEmail(email),
                 dal: new Date().toISOString(),
               }
         ),
@@ -235,7 +247,7 @@ export default function StoreProvider({ children }: { children: ReactNode }) {
     [account, richieste, salvati, hydrated, registraRichiesta]
   );
 
-  /* ── Operatore ────────────────────────────────────────────────── */
+  /* ── Concierge ────────────────────────────────────────────────── */
 
   const operator = useMemo<OperatorApi>(
     () => ({
@@ -258,6 +270,13 @@ export default function StoreProvider({ children }: { children: ReactNode }) {
       </AccountCtx.Provider>
     </CartCtx.Provider>
   );
+}
+
+/** "mario.rossi@…" → "mario rossi". Con cifre dentro, meglio niente. */
+function nomeDaEmail(email: string): string {
+  const parte = email.split("@")[0];
+  if (/\d/.test(parte)) return "";
+  return parte.replace(/[._-]+/g, " ").trim();
 }
 
 /** Helper per costruire gli attributi di riga dagli add-on scelti */

@@ -37,7 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="pb-[60px] lg:pb-0">
         {/*
           StoreProvider avvolge tutto: carrello, account e pannello
-          operatore devono essere raggiungibili da qualsiasi pagina.
+          concierge devono essere raggiungibili da qualsiasi pagina.
           CartDrawer e OperatorDialog sono montati una volta sola qui,
           non ripetuti pagina per pagina.
         */}

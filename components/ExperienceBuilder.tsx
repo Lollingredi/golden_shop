@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import Link from "next/link";
+import { useId, useMemo, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { formatAmount } from "@/lib/money";
 import { addons, addonById, packages, packageAddonsPrice } from "@/lib/experiences";
 import { useCart, useOperator } from "./StoreProvider";
 import PlaceholderMedia from "./PlaceholderMedia";
+import { Bottone } from "./Bottone";
 
 export type BaseOption = {
   handle: string;
@@ -34,6 +34,7 @@ export default function ExperienceBuilder({ bases }: { bases: BaseOption[] }) {
   const [selected, setSelected] = useState<string[]>(["the-reveal", "memories"]);
   const [preset, setPreset] = useState<string | null>("the-big-reveal");
   const [aggiunto, setAggiunto] = useState(false);
+  const notaRaccontoId = useId();
 
   const base = bases.find((b) => b.handle === baseHandle) ?? bases[0];
 
@@ -94,7 +95,7 @@ export default function ExperienceBuilder({ bases }: { bases: BaseOption[] }) {
         {/* passo 1 — l'esperienza */}
         <div>
           <p className="kicker mb-4">Passo 1 — L&apos;occasione</p>
-          <h3 className="font-display text-2xl leading-tight mb-6">
+          <h3 className="h-blocco mb-6">
             Da dove partiamo?
           </h3>
           <div className="flex flex-wrap gap-3">
@@ -107,7 +108,7 @@ export default function ExperienceBuilder({ bases }: { bases: BaseOption[] }) {
                 className={`label px-5 py-3 border transition-colors duration-200 ${
                   preset === p.id
                     ? "bg-[var(--champagne)] text-[var(--ink)] border-[var(--champagne)]"
-                    : "border-white/20 text-white/80 hover:border-[var(--champagne)] hover:text-[var(--champagne)]"
+                    : "border-[var(--l2)] text-[var(--t2)] hover:border-[var(--champagne)] hover:text-[var(--champagne)]"
                 }`}
               >
                 {p.title}
@@ -120,7 +121,7 @@ export default function ExperienceBuilder({ bases }: { bases: BaseOption[] }) {
                 setSelected([]);
               }}
               aria-pressed={preset === null && selected.length === 0}
-              className="label px-5 py-3 border border-white/20 text-white/50 hover:border-white/50 hover:text-white/80 transition-colors duration-200"
+              className="label px-5 py-3 border border-[var(--l2)] text-[var(--t3)] hover:border-[var(--l3)] hover:text-[var(--t2)] transition-colors duration-200"
             >
               Parto da zero
             </button>
@@ -130,28 +131,54 @@ export default function ExperienceBuilder({ bases }: { bases: BaseOption[] }) {
         {/* passo 2 — gli add-on: il cuore della pagina */}
         <div>
           <p className="kicker mb-4">Passo 2 — Cosa succede</p>
-          <h3 className="font-display text-2xl leading-tight mb-2">
+          <h3 className="h-blocco mb-2">
             Componete il momento.
           </h3>
-          <p className="text-[15px] text-white/55 mb-8 max-w-[60ch]">
+          <p className="text-[15px] text-[var(--t3)] mb-8 max-w-[60ch]">
             Ogni voce è un servizio a sé, con la sua crew. Si aggiungono e si
             tolgono fino al giorno prima.
           </p>
-          <div className="grid gap-3 sm:grid-cols-2">
+          {/*
+            Erano <button aria-pressed>. Corretto per un interruttore, ma
+            non diceva che Memories e Cinematic si escludono: uno screen
+            reader leggeva otto interruttori indipendenti.
+            Ora sono caselle vere dentro un fieldset, e le due del gruppo
+            "racconto" rimandano alla nota che spiega l'esclusione.
+          */}
+          <fieldset className="grid gap-3 sm:grid-cols-2 border-0 p-0 m-0">
+            <legend className="sr-only">Add-on dell&apos;esperienza</legend>
             {addons.map((a) => {
               const on = selected.includes(a.id);
               return (
-                <button
+                <label
                   key={a.id}
-                  type="button"
-                  onClick={() => toggle(a.id)}
-                  aria-pressed={on}
-                  className={`group text-left p-6 border transition-colors duration-200 ${
+                  className={`group text-left border cursor-pointer transition-colors duration-200 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-[3px] has-[:focus-visible]:outline-[var(--champagne)] ${
                     on
                       ? "border-[var(--champagne)] bg-[var(--champagne)]/[0.07]"
-                      : "border-white/12 hover:border-white/35 bg-[var(--ink-800)]/40"
+                      : "border-[var(--l1)] hover:border-[var(--l2)] bg-[var(--ink-800)]/40"
                   }`}
                 >
+                  {/* Miniatura 3:2: l'add-on si riconosce prima di leggerlo.
+                      Resta desaturata finché non è selezionato, così la
+                      griglia non diventa un mosaico di otto fotografie. */}
+                  <div className="relative aspect-[3/2] overflow-hidden">
+                    <Image
+                      src={a.image}
+                      alt={a.imageAlt}
+                      fill
+                      sizes="(min-width: 640px) 300px, 90vw"
+                      className={`object-cover transition-all duration-300 ${
+                        on
+                          ? "saturate-100 opacity-100"
+                          : "saturate-[0.55] opacity-80 group-hover:saturate-100 group-hover:opacity-100"
+                      }`}
+                    />
+                    <div
+                      aria-hidden
+                      className="absolute inset-0 bg-gradient-to-t from-[var(--ink)]/70 to-transparent"
+                    />
+                  </div>
+                  <div className="p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <span className="font-display text-xl leading-tight block">
@@ -159,31 +186,39 @@ export default function ExperienceBuilder({ bases }: { bases: BaseOption[] }) {
                       </span>
                       <span className="text-xs text-[var(--muted)]">{a.contents}</span>
                     </div>
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={on}
+                      onChange={() => toggle(a.id)}
+                      aria-describedby={a.group === "racconto" ? notaRaccontoId : undefined}
+                    />
                     <span
                       aria-hidden
                       className={`shrink-0 w-6 h-6 border flex items-center justify-center text-[13px] leading-none transition-colors duration-200 ${
                         on
                           ? "bg-[var(--champagne)] border-[var(--champagne)] text-[var(--ink)]"
-                          : "border-white/30 text-transparent group-hover:border-white/60"
+                          : "border-[var(--l2)] text-transparent group-hover:border-[var(--l3)]"
                       }`}
                     >
                       ✓
                     </span>
                   </div>
-                  <p className="text-[14px] leading-relaxed text-white/60 mt-4">
+                  <p className="text-[14px] leading-relaxed text-[var(--t2)] mt-4">
                     {a.description}
                   </p>
-                  <div className="flex justify-between items-baseline mt-5 pt-4 border-t border-white/10 text-xs">
+                  <div className="flex justify-between items-baseline mt-5 pt-4 border-t border-[var(--l1)] text-xs">
                     <span className="text-[var(--muted)]">{a.durata}</span>
                     <span className="text-[var(--champagne)]">
                       + {formatAmount(Number(a.price.amount))}
                     </span>
                   </div>
-                </button>
+                  </div>
+                </label>
               );
             })}
-          </div>
-          <p className="text-xs text-[var(--muted)] mt-4">
+          </fieldset>
+          <p id={notaRaccontoId} className="text-xs text-[var(--muted)] mt-4">
             Memories e Cinematic si escludono: Cinematic è Memories con il video.
           </p>
         </div>
@@ -191,14 +226,14 @@ export default function ExperienceBuilder({ bases }: { bases: BaseOption[] }) {
         {/* passo 3 — la base, volutamente per ultima */}
         <div>
           <p className="kicker mb-4">Passo 3 — Su cosa</p>
-          <h3 className="font-display text-2xl leading-tight mb-2">
+          <h3 className="h-blocco mb-2">
             E poi scegliete la vettura.
           </h3>
-          <p className="text-[15px] text-white/55 mb-8 max-w-[60ch]">
+          <p className="text-[15px] text-[var(--t3)] mb-8 max-w-[60ch]">
             È la base dell&apos;esperienza. Tutte hanno consegna, coperture e
             partner verificati: cambia il carattere, non il servizio.
           </p>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 grid-cols-2 md:grid-cols-3">
             {bases.map((b) => {
               const on = b.handle === baseHandle;
               return (
@@ -208,7 +243,7 @@ export default function ExperienceBuilder({ bases }: { bases: BaseOption[] }) {
                   onClick={() => setBaseHandle(b.handle)}
                   aria-pressed={on}
                   className={`text-left border transition-colors duration-200 ${
-                    on ? "border-[var(--champagne)]" : "border-white/12 hover:border-white/35"
+                    on ? "border-[var(--champagne)]" : "border-[var(--l1)] hover:border-[var(--l2)]"
                   }`}
                 >
                   <div className="relative aspect-[16/10] overflow-hidden bg-[var(--ink-800)]">
@@ -240,7 +275,7 @@ export default function ExperienceBuilder({ bases }: { bases: BaseOption[] }) {
       </div>
 
       {/* ── colonna destra: il riepilogo ─────────────────────────── */}
-      <div className="lg:sticky lg:top-[96px] bg-[var(--ink-800)] p-8">
+      <div className="lg:sticky lg:top-[calc(var(--h-header)+32px)] bg-[var(--ink-800)] p-8">
         <p className="kicker mb-6">La vostra esperienza</p>
 
         {presetPkg && (
@@ -248,8 +283,8 @@ export default function ExperienceBuilder({ bases }: { bases: BaseOption[] }) {
         )}
 
         <dl className="grid gap-3 text-[15px]">
-          <div className="flex justify-between gap-4 pb-3 border-b border-white/10">
-            <dt className="text-white/60">Base — {base?.title}</dt>
+          <div className="flex justify-between gap-4 pb-3 border-b border-[var(--l1)]">
+            <dt className="text-[var(--t2)]">Base — {base?.title}</dt>
             <dd className="shrink-0">{formatAmount(base?.price ?? 0)}</dd>
           </div>
 
@@ -262,9 +297,9 @@ export default function ExperienceBuilder({ bases }: { bases: BaseOption[] }) {
                 animate={{ opacity: 1, height: "auto" }}
                 exit={reduced ? undefined : { opacity: 0, height: 0 }}
                 transition={{ duration: 0.22, ease: [0, 0, 0.2, 1] }}
-                className="flex justify-between gap-4 pb-3 border-b border-white/10 overflow-hidden"
+                className="flex justify-between gap-4 pb-3 border-b border-[var(--l1)] overflow-hidden"
               >
-                <dt className="text-white/60">{a.title}</dt>
+                <dt className="text-[var(--t2)]">{a.title}</dt>
                 <dd className="shrink-0">{formatAmount(Number(a.price.amount))}</dd>
               </motion.div>
             ))}
@@ -277,7 +312,7 @@ export default function ExperienceBuilder({ bases }: { bases: BaseOption[] }) {
           )}
 
           {saving > 0 && (
-            <div className="flex justify-between gap-4 pb-3 border-b border-white/10 text-[var(--champagne)]">
+            <div className="flex justify-between gap-4 pb-3 border-b border-[var(--l1)] text-[var(--champagne)]">
               <dt>Formula pacchetto</dt>
               <dd className="shrink-0">− {formatAmount(saving)}</dd>
             </div>
@@ -285,7 +320,7 @@ export default function ExperienceBuilder({ bases }: { bases: BaseOption[] }) {
         </dl>
 
         <div className="flex justify-between items-baseline mt-6 mb-2">
-          <span className="label text-white/70">Totale indicativo</span>
+          <span className="label text-[var(--t2)]">Totale indicativo</span>
           <span className="font-display text-[28px] text-[var(--champagne)]">
             {formatAmount(total)}
           </span>
@@ -295,26 +330,12 @@ export default function ExperienceBuilder({ bases }: { bases: BaseOption[] }) {
           da una persona, dopo che ci avete detto data e città.
         </p>
 
-        <button
-          type="button"
-          onClick={aggiungiAlCarrello}
-          className="w-full text-center bg-[var(--champagne)] text-[var(--ink)] label px-8 py-4 hover:bg-white transition-colors duration-200"
-        >
+        <Bottone type="button" onClick={aggiungiAlCarrello} pieno>
           {aggiunto ? "Aggiunto al carrello ✓" : "Aggiungi al carrello"}
-        </button>
-        <Link
-          href="/#richiesta"
-          className="block text-center border border-[var(--champagne)] text-[var(--champagne)] label px-8 py-4 mt-3 hover:bg-[var(--champagne)] hover:text-[var(--ink)] transition-colors duration-200"
-        >
-          Chiedi un preventivo
-        </Link>
-        <button
-          type="button"
-          onClick={() => operator.open("Configuratore noleggio")}
-          className="w-full label text-[var(--champagne)] py-4 mt-1 hover:text-white transition-colors"
-        >
-          Parla con un operatore
-        </button>
+        </Bottone>
+        <Bottone type="button" onClick={() => operator.open("Configuratore noleggio")} aspetto="contorno" pieno className="mt-3">
+          Parla con un concierge
+        </Bottone>
       </div>
     </div>
   );

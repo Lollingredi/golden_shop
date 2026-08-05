@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useCart } from "./StoreProvider";
+import { Bottone, type Aspetto, type Misura } from "./Bottone";
 import type { LineAttribute } from "@/lib/store";
 
 /* ────────────────────────────────────────────────────────────────
@@ -10,6 +11,8 @@ import type { LineAttribute } from "@/lib/store";
    Sono client component minuscoli, montati dentro pagine che restano
    server component: così l'HTML del catalogo continua a essere
    generato a build time e solo il pulsante diventa interattivo.
+
+   L'aspetto arriva da <Bottone>: qui non si scrivono classi.
    ──────────────────────────────────────────────────────────────── */
 
 type Base = {
@@ -22,11 +25,18 @@ type Base = {
   sconto?: number;
 };
 
+type Stile = { aspetto?: Aspetto; misura?: Misura; pieno?: boolean; apri?: boolean };
+
 function useAggiunta() {
   const cart = useCart();
   const [fatto, setFatto] = useState(false);
-  function aggiungi(line: Base, kind: "prodotto" | "pacchetto" | "esperienza") {
+  function aggiungi(
+    line: Base,
+    kind: "prodotto" | "pacchetto" | "esperienza",
+    apri = true
+  ) {
     cart.add({
+      apri,
       merchandiseId: line.merchandiseId,
       kind,
       title: line.title,
@@ -43,37 +53,32 @@ function useAggiunta() {
 }
 
 /** Scheda prodotto: aggiunge la vettura nuda, senza add-on */
-export function AddProductButton(props: Base & { className?: string }) {
+export function AddProductButton({ aspetto, misura, pieno, apri, ...line }: Base & Stile) {
   const { aggiungi, fatto } = useAggiunta();
-  const { className, ...line } = props;
   return (
-    <button
-      type="button"
-      onClick={() => aggiungi(line, "prodotto")}
-      className={
-        className ??
-        "bg-[var(--champagne)] text-[var(--ink)] label px-10 py-4 hover:bg-white transition-colors duration-200"
-      }
+    <Bottone
+      aspetto={aspetto}
+      misura={misura}
+      pieno={pieno}
+      onClick={() => aggiungi(line, "prodotto", apri)}
     >
       {fatto ? "Aggiunto ✓" : "Aggiungi al carrello"}
-    </button>
+    </Bottone>
   );
 }
 
 /** Scheda pacchetto: aggiunge l'esperienza preconfigurata */
-export function AddPackageButton(props: Base & { className?: string }) {
+export function AddPackageButton({ aspetto, misura, pieno, apri = false, ...line }: Base & Stile) {
   const { aggiungi, fatto } = useAggiunta();
-  const { className, ...line } = props;
   return (
-    <button
-      type="button"
-      onClick={() => aggiungi(line, "pacchetto")}
-      className={
-        className ??
-        "label border border-[var(--champagne)] text-[var(--champagne)] px-6 py-3 hover:bg-[var(--champagne)] hover:text-[var(--ink)] transition-colors duration-200"
-      }
+    <Bottone
+      aspetto={aspetto}
+      misura={misura}
+      pieno={pieno}
+      onClick={() => aggiungi(line, "pacchetto", apri)}
     >
-      {fatto ? "Aggiunto ✓" : "Aggiungi"}
-    </button>
+      {/* Stessa etichetta della scheda prodotto: una azione, un nome */}
+      {fatto ? "Aggiunto ✓" : "Aggiungi al carrello"}
+    </Bottone>
   );
 }

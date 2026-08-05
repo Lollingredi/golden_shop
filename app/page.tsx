@@ -5,7 +5,8 @@ import Reveal, { RevealGrid } from "@/components/Reveal";
 import ProductCard from "@/components/ProductCard";
 import PlaceholderMedia from "@/components/PlaceholderMedia";
 import RequestForm from "@/components/RequestForm";
-import { OperatorPopup } from "@/components/Operator";
+import { OperatorLink, OperatorPopup } from "@/components/Operator";
+import { BottoneLink } from "@/components/Bottone";
 
 const steps = [
   { n: "01", t: "Arrivo", d: "Concordiamo luogo e ora con voi, non con il partner. Alle spalle, tutto è già stato provato." },
@@ -37,44 +38,44 @@ export default async function Home() {
           className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[var(--ink)]/85 via-[var(--ink)]/55 to-[var(--ink)]/10" />
-        <div className="relative w-full max-w-[1280px] mx-auto">
-          <Reveal y={16}>
+        <div className="relative w-full contenuto">
+          <Reveal immediato y={16}>
             <p className="kicker mb-6">Marketplace italiano di esperienze</p>
           </Reveal>
-          <Reveal y={24} delay={0.08}>
-            <h1 className="font-display text-[clamp(44px,7.4vw,80px)] leading-[1.05] max-w-[14ch] text-balance">
+          <Reveal immediato y={24} delay={0.08}>
+            <h1 className="h-hero max-w-[14ch] text-balance">
               Il giorno si ricorda da come è stato consegnato.
             </h1>
           </Reveal>
-          <Reveal y={24} delay={0.18}>
+          <Reveal immediato y={24} delay={0.18}>
+            {/* Erano due pillole a raggio pieno su fondo avorio: l'unico
+                elemento arrotondato di tutto il sito, e la prima cosa che
+                si vedeva. Ora sono i pulsanti del sistema, e la seconda
+                apre il pannello invece di rimandare al modulo. */}
             <div className="flex flex-wrap gap-4 mt-16">
-              <Link
-                href="/collections"
-                className="group flex items-center gap-6 bg-[var(--ivory)] text-[var(--ink)] rounded-full pl-7 pr-2 py-2 label hover:bg-white transition-colors duration-200"
-              >
-                <span>Scegli la tua <strong className="font-medium text-[var(--gold-text)]">esperienza</strong></span>
-                <span className="w-[34px] h-[34px] rounded-full border border-[var(--ink)]/30 grid place-items-center text-sm transition-transform duration-200 group-hover:translate-x-1">→</span>
-              </Link>
-              <Link
-                href="/#richiesta"
-                className="group flex items-center gap-6 bg-[var(--ivory)] text-[var(--ink)] rounded-full pl-7 pr-2 py-2 label hover:bg-white transition-colors duration-200"
-              >
-                <span>Parla con un <strong className="font-medium text-[var(--gold-text)]">concierge</strong></span>
-                <span className="w-[34px] h-[34px] rounded-full border border-[var(--ink)]/30 grid place-items-center text-sm transition-transform duration-200 group-hover:translate-x-1">→</span>
-              </Link>
+              <BottoneLink href="/collections">Scegli la tua esperienza</BottoneLink>
+              <OperatorLink contesto="Apertura homepage" aspetto="contorno" misura="md" />
             </div>
           </Reveal>
         </div>
       </section>
 
-      {/* ── I tre servizi ────────────────────────────────────── */}
-      <section id="servizi" className="px-6 lg:px-10 py-20 lg:py-[120px] scroll-mt-[72px]">
-        <div className="max-w-[1280px] mx-auto">
+      {/* ── Le categorie ─────────────────────────────────────── */}
+      {/* Stavano nella barra in alto, tre voci di testo. Qui hanno
+          l'immagine e una riga che spiega cosa contiene il catalogo:
+          si sceglie guardando, non leggendo un menu. Ogni riquadro
+          porta al catalogo del servizio. */}
+      <section id="servizi" className="sezione ancora">
+        <div className="contenuto">
           <Reveal>
-            <p className="kicker mb-6">Tre modi di cominciare</p>
-            <h2 className="font-display text-3xl lg:text-[40px] leading-tight mb-16 max-w-[20ch]">
+            <p className="kicker mb-6">Le categorie</p>
+            <h2 className="h-sezione mb-6 max-w-[20ch]">
               Strada, cerimonia, tavola.
             </h2>
+            <p className="text-[17px] leading-relaxed text-[var(--t2)] mb-16 max-w-[56ch]">
+              Tre cataloghi separati, ognuno con i suoi partner e i suoi prezzi
+              di partenza. Si entra da qui.
+            </p>
           </Reveal>
 
           <RevealGrid className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -95,10 +96,13 @@ export default async function Home() {
                   <div className="absolute inset-0 bg-gradient-to-t from-[var(--ink)]/70 via-[var(--ink)]/10 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-8">
                     <p className="kicker mb-3">{c.kicker}</p>
-                    <h3 className="font-display text-2xl leading-tight">{c.title}</h3>
+                    <h3 className="h-blocco">{c.title}</h3>
                   </div>
                 </div>
                 <p className="mt-4 text-sm text-[var(--muted)] leading-relaxed max-w-[38ch]">{c.description}</p>
+                <span className="label inline-block mt-4 text-[var(--champagne)] border-b border-[var(--champagne)]/40 pb-1 group-hover:border-[var(--champagne)] transition-colors">
+                  Catalogo {c.title.toLowerCase()}
+                </span>
               </Link>
             ))}
           </RevealGrid>
@@ -106,12 +110,12 @@ export default async function Home() {
       </section>
 
       {/* ── Celebrity Experience ─────────────────────────────── */}
-      <section className="bg-[var(--ink-800)] px-6 lg:px-10 py-20 lg:py-[120px]">
-        <div className="max-w-[1280px] mx-auto">
+      <section className="bg-[var(--ink-800)] sezione">
+        <div className="contenuto">
           <Reveal>
             <p className="kicker mb-6">Il servizio firma</p>
-            <h2 className="font-display text-3xl lg:text-[40px] leading-tight mb-4">Celebrity Experience</h2>
-            <p className="text-[17px] leading-relaxed text-white/70 mb-16 max-w-[62ch]">
+            <h2 className="h-sezione mb-4">Celebrity Experience</h2>
+            <p className="text-[17px] leading-relaxed text-[var(--t2)] mb-16 max-w-[62ch]">
               Il veicolo arriva coperto da un telo nero e chiuso da un nastro rosso. Il cliente
               taglia il nastro. Parte la colonna sonora. Un fotografo e un videomaker restano fino alla fine.
             </p>
@@ -120,8 +124,8 @@ export default async function Home() {
             {steps.map((s) => (
               <div key={s.n} className="border-t border-[var(--champagne)]/30 pt-6">
                 <p className="font-display text-2xl text-[var(--champagne)] mb-4">{s.n}</p>
-                <h3 className="font-display text-2xl mb-4">{s.t}</h3>
-                <p className="text-[17px] leading-relaxed text-white/65">{s.d}</p>
+                <h3 className="h-blocco mb-4">{s.t}</h3>
+                <p className="text-[17px] leading-relaxed text-[var(--t2)]">{s.d}</p>
               </div>
             ))}
           </RevealGrid>
@@ -129,13 +133,13 @@ export default async function Home() {
       </section>
 
       {/* ── In evidenza dal catalogo ─────────────────────────── */}
-      <section className="px-6 lg:px-10 py-20 lg:py-[120px]">
-        <div className="max-w-[1280px] mx-auto">
+      <section className="sezione">
+        <div className="contenuto">
           <Reveal>
             <div className="flex flex-wrap items-baseline justify-between gap-6 mb-16">
               <div>
                 <p className="kicker mb-6">Dal catalogo</p>
-                <h2 className="font-display text-3xl lg:text-[40px] leading-tight">In evidenza questa settimana.</h2>
+                <h2 className="h-sezione">In evidenza questa settimana.</h2>
               </div>
               <Link href="/collections" className="label text-[var(--champagne)] border-b border-[var(--champagne)]/40 pb-1 hover:border-[var(--champagne)] transition-colors">
                 Vedi tutto il catalogo
@@ -149,20 +153,23 @@ export default async function Home() {
       </section>
 
       {/* ── Come funziona ────────────────────────────────────── */}
-      <section className="bg-[var(--ivory)] text-[var(--ink)] px-6 lg:px-10 py-20 lg:py-[120px]">
-        <div className="max-w-[1280px] mx-auto">
+      {/* zona-chiara: gli stessi token del resto del sito, ribaltati.
+          Prima questa sezione si dipingeva a mano, kicker compresi
+          (style inline con --gold-text), perché era l'unica chiara. */}
+      <section className="zona-chiara sezione">
+        <div className="contenuto">
           <Reveal>
-            <div className="bg-white border border-[var(--champagne-dk)] rounded-sm p-10 lg:p-24">
-              <p className="kicker mb-6" style={{ color: "var(--gold-text)" }}>Come funziona</p>
-              <h2 className="font-display text-3xl lg:text-[40px] leading-tight mb-16 max-w-[24ch]">
+            <div className="bg-[var(--ink-800)] border border-[var(--champagne-dk)] p-10 lg:p-24">
+              <p className="kicker mb-6">Come funziona</p>
+              <h2 className="h-sezione mb-16 max-w-[24ch]">
                 Tre passaggi, una sola persona di riferimento.
               </h2>
               <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
                 {how.map((s) => (
                   <div key={s.k}>
-                    <p className="kicker mb-4" style={{ color: "var(--gold-text)" }}>{s.k}</p>
-                    <h3 className="font-display text-2xl mb-4">{s.t}</h3>
-                    <p className="text-[17px] leading-relaxed max-w-[40ch]">{s.d}</p>
+                    <p className="kicker mb-4">{s.k}</p>
+                    <h3 className="h-blocco mb-4">{s.t}</h3>
+                    <p className="text-[17px] leading-relaxed max-w-[40ch] text-[var(--t2)]">{s.d}</p>
                   </div>
                 ))}
               </div>
@@ -171,9 +178,9 @@ export default async function Home() {
         </div>
       </section>
 
-      <RequestForm />
+      <RequestForm origine="Modulo — Homepage" />
 
-      {/* Innesco operatore 2 di 4 — popup, una volta per visitatore */}
+      {/* Innesco concierge 2 di 4 — popup, una volta per visitatore */}
       <OperatorPopup contesto="Homepage" />
     </>
   );

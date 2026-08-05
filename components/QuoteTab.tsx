@@ -6,7 +6,7 @@ export default function QuoteTab() {
     <>
       <Link
         href="/#richiesta"
-        className="hidden lg:block fixed left-0 top-1/2 -translate-y-1/2 z-40 bg-[var(--champagne)] text-[var(--ink)] label px-[11px] py-6 hover:bg-white transition-colors duration-200"
+        className="hidden lg:block fixed left-0 top-1/2 -translate-y-1/2 z-40 bg-[var(--champagne)] text-[var(--ink)] label px-[11px] py-6 border-y border-r border-[var(--champagne-dk)] hover:bg-white transition-colors duration-200"
         style={{ writingMode: "vertical-rl" }}
       >
         Preventivo gratuito

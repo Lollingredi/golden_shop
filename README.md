@@ -1,7 +1,18 @@
 # GOLDEN — sito statico
 
 Next.js (App Router) + Tailwind + framer-motion. Nessun backend: il catalogo è
-un file TypeScript, il modulo di richiesta non invia nulla.
+un file TypeScript, lo stato dell'utente vive in `localStorage`.
+
+## I documenti
+
+| File | Per chi |
+|---|---|
+| **`TECNICO.md`** | Come funziona tutto e cosa resta da implementare |
+| **`SOCI.md`** | A che punto siamo, in italiano non tecnico |
+| `PROMPT-IMMAGINI.md` | Le 23 fotografie mancanti, con i testi per produrle |
+| `RIPARTI.txt` | Installazione pulita, se npm fa i capricci |
+
+Questo README resta la scheda d'avvio. Per tutto il resto, `TECNICO.md`.
 
 ## Avvio
 
@@ -56,15 +67,24 @@ checkout (redirect a `checkoutUrl`) e togliere `output: "export"` da
 
 ## Immagini
 
-In `public/images/`. Due sono segnaposto dichiarati:
+In `public/images/`. Le 23 immagini richieste da `PROMPT-IMMAGINI.md` sono
+state generate e collegate: rivelazione, quattro pacchetti, otto add-on,
+sushi, location e wedding. Non restano segnaposto.
 
-- **`piazza.jpg`** — usata per "Location e allestimento", va sostituita.
-- I quattro prodotti sushi non hanno foto: il componente
-  `PlaceholderMedia` mostra un riquadro riconoscibile invece di
-  un'immagine sbagliata.
-
-Manca ancora una fotografia della Celebrity Experience — telo nero, nastro
-rosso — che è il servizio firma e oggi è raccontato solo a parole.
+- **Formato**: JPG qualità 85 progressive, 65–270 KB per file. Il progetto
+  ha `images: { unoptimized: true }` per via dell'export statico, quindi il
+  peso del file è quello che arriva al browser: niente PNG in `public/`.
+- **Originali**: i PNG a piena risoluzione stanno in
+  `immagini-originali-png/`, fuori da `public/` perché non finiscano
+  nell'export. Da lì si rigenerano i JPG se servono altri tagli.
+- **Risoluzione**: i generati sono sotto i formati chiesti nel documento
+  (es. 922 × 1152 invece di 1400 × 1750). Le proporzioni sono corrette e i
+  file non sono stati upscalati; se un giorno servisse più nitidezza sugli
+  hero, vanno rigenerati alla risoluzione piena.
+- **`public/images/vecchie/`**: `piazza.jpg` e `urus-nastro-wide.jpg`,
+  sostituite e non più referenziate. Le altre foto d'archivio
+  (`miura-*`, `ferrari-notte`, `jet-rolls`, `showroom`, `urus-*`) restano
+  in uso: sono le vetture reali a catalogo.
 
 ## Note di implementazione
 

@@ -1,16 +1,57 @@
 @import "tailwindcss";
 
-/* ── Design tokens GOLDEN ──────────────────────────────────────
-   Estratti dai mock-up e fissati nel brief di design.            */
+/* ════════════════════════════════════════════════════════════════
+   SISTEMA GOLDEN
+
+   Tre gruppi di decisioni, prese una volta sola:
+   1. Colori e misure  → le variabili qui sotto
+   2. Tipografia       → .h-hero / .h-pagina / .h-sezione / .h-blocco
+   3. Ritmo            → .sezione / .sezione-stretta / .pagina-top
+
+   Regola: nelle pagine non si scrivono più valori di dimensione o
+   di spaziatura a mano. Se serve un valore nuovo, si aggiunge qui e
+   si motiva. È l'unica cosa che impedisce alla quindicesima variante
+   di nascere.
+   ════════════════════════════════════════════════════════════════ */
+
 :root {
+  /* ── Colori ─────────────────────────────────────────────────── */
   --ink:          #090B22;  /* fondo dominante          */
   --ink-800:      #141833;  /* superfici sollevate      */
   --ivory:        #F7F1E3;  /* fondo chiaro alternativo */
   --champagne:    #E7D9B4;  /* accento su scuro         */
   --champagne-dk: #C1AF97;  /* bordi e filetti          */
-  --gold-text:    #8A7345;  /* accento leggibile su bianco */
-  --muted:        #6E7186;
+  /* Accento su chiaro. Era #8A7345: 4,04:1 su avorio, sotto la soglia
+     AA. Ora 4,97:1 su avorio e 5,60:1 su bianco. */
+  --gold-text:    #7A653B;
+  /* Metadati e note. Era #6E7186: 4,04:1 su --ink e 3,62:1 su --ink-800,
+     sotto la soglia AA di 4,5:1 su testo da 11–13px. Ora 5,91:1 e 5,30:1. */
+  --muted:        #8A8DA0;
 
+  /* ── Livelli di testo e di filetto ──────────────────────────────
+     Erano dodici opacità di bianco e dieci di bordo, scritte a mano.
+     Adesso sono variabili: è ciò che permette a .zona-chiara di
+     ribaltare l'intera pagina cambiando sei righe invece di duecento. */
+  --t1: #fff;                      /* titoli e testo pieno       */
+  --t2: rgb(255 255 255 / .70);    /* testo corrente             */
+  --t3: rgb(255 255 255 / .50);    /* secondario                 */
+  --t4: rgb(255 255 255 / .25);    /* segnaposto, tenue          */
+  --l1: rgb(255 255 255 / .10);    /* filetto                    */
+  --l2: rgb(255 255 255 / .20);    /* contorno                   */
+  --l3: rgb(255 255 255 / .40);    /* contorno attivo            */
+
+  /* ── Il pulsante principale ─────────────────────────────────── */
+  --azione-fondo: var(--champagne);
+  --azione-testo: var(--ink);
+  --azione-hover: #fff;
+  --su-champagne: var(--ink);      /* testo sopra il champagne pieno */
+
+  /* ── Misure ─────────────────────────────────────────────────── */
+  --h-header:  72px;   /* altezza dell'header fisso            */
+  --ancora:    96px;   /* header + 24px d'aria per le ancore   */
+  --contenuto: 1280px; /* larghezza massima del contenuto      */
+
+  /* ── Tipografia ─────────────────────────────────────────────── */
   --font-display: "Noto Serif Display", Georgia, serif;
   --font-ui: Jost, "Helvetica Neue", Arial, sans-serif;
 }
@@ -35,6 +76,42 @@ body {
 
 .font-display { font-family: var(--font-display); font-weight: 400; }
 
+/* ════════════════════════════════════════════════════════════════
+   Da qui in giù tutto sta in @layer components.
+
+   Non è formalità: le utility di Tailwind vivono in @layer utilities,
+   che nella cascata viene dopo. Se queste classi restassero fuori dai
+   livelli vincerebbero sempre, e un `pb-16` messo di proposito su una
+   .sezione non avrebbe effetto. Dentro components, l'eccezione
+   puntuale può ancora scavalcare la regola.
+   ════════════════════════════════════════════════════════════════ */
+@layer components {
+
+/* ── Scala tipografica ───────────────────────────────────────────
+   Quattro livelli. Erano sette scale di titolo diverse, nessuna
+   derivata dalle altre: fra 46px e 44px non c'era un'intenzione,
+   c'era solo che erano state scritte in giorni diversi.
+
+   .h-hero    apertura di pagina con immagine a tutto schermo
+   .h-pagina  titolo di pagina senza apertura (catalogo, checkout…)
+   .h-sezione titolo di sezione dentro una pagina
+   .h-blocco  titolo di scheda o di colonna
+   ──────────────────────────────────────────────────────────────── */
+
+.h-hero,
+.h-pagina,
+.h-sezione,
+.h-blocco {
+  font-family: var(--font-display);
+  font-weight: 400;
+  margin: 0;
+}
+
+.h-hero    { font-size: clamp(40px, 6.6vw, 76px); line-height: 1.05; }
+.h-pagina  { font-size: clamp(30px, 4.6vw, 48px); line-height: 1.1; }
+.h-sezione { font-size: clamp(26px, 3.4vw, 40px); line-height: 1.15; }
+.h-blocco  { font-size: 24px;                     line-height: 1.2; }
+
 /* Sopratitolo: 12px maiuscolo, tracking largo, champagne */
 .kicker {
   font-size: 12px;
@@ -51,6 +128,87 @@ body {
   letter-spacing: .12em;
   text-transform: uppercase;
 }
+
+/* Etichetta di campo. Prima si usava .kicker, che è il sopratitolo di
+   sezione: due ruoli diversi sulla stessa classe, e il secondo toglieva
+   forza al primo. */
+.campo-etichetta {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── Ritmo verticale ─────────────────────────────────────────────
+   Un solo respiro per tutto il sito. Convivevano py-[120px],
+   py-28 e py-24: otto pixel di differenza non si notano da soli, si
+   notano passando da una pagina all'altra.
+   ──────────────────────────────────────────────────────────────── */
+
+.sezione {
+  padding-inline: 24px;
+  padding-block: 80px;
+}
+.sezione-stretta {
+  padding-inline: 24px;
+  padding-block: 64px;
+}
+/** Pagine che non hanno un'apertura a immagine: lo spazio sotto l'header */
+.pagina-top { padding-top: calc(var(--h-header) + 68px); }
+/** Pagine che iniziano con un percorso di navigazione: serve meno aria */
+.sotto-header { padding-top: calc(var(--h-header) + 28px); }
+
+@media (min-width: 1024px) {
+  .sezione         { padding-inline: 40px; padding-block: 120px; }
+  .sezione-stretta { padding-inline: 40px; padding-block: 96px; }
+  .pagina-top      { padding-top: calc(var(--h-header) + 108px); }
+  .sotto-header    { padding-top: calc(var(--h-header) + 48px); }
+}
+
+/** Contenitore centrato: era ripetuto in ogni sezione */
+.contenuto {
+  max-width: var(--contenuto);
+  margin-inline: auto;
+}
+
+/** Ancore: atterrano con 24px d'aria sotto l'header, non a filo */
+.ancora { scroll-margin-top: var(--ancora); }
+
+/* ── Zona chiara ─────────────────────────────────────────────────
+   L'avorio era usato in una sezione sola di tutto il sito: un respiro
+   quando le pagine erano quattro, un'anomalia isolata adesso che sono
+   dieci. Gli è stato dato un ruolo: è il fondo della parte
+   amministrativa — accesso, area personale, conferma — che così si
+   distingue a colpo d'occhio dal catalogo.
+
+   Non è un tema a parte: ribalta le stesse variabili che il resto del
+   sito già usa. Un componente montato qui dentro non sa di essere su
+   fondo chiaro, e funziona lo stesso.
+   ──────────────────────────────────────────────────────────────── */
+.zona-chiara {
+  background: var(--ivory);
+  color: var(--ink);
+
+  --champagne: var(--gold-text);   /* l'accento diventa leggibile su chiaro */
+  --ink-800:   #fff;               /* le superfici sollevate diventano bianche */
+  --muted:     #5F6274;            /* 5,35:1 su avorio, 6,02:1 su bianco */
+
+  --t1: var(--ink);
+  --t2: rgb(9 11 34 / .78);
+  --t3: rgb(9 11 34 / .55);
+  --t4: rgb(9 11 34 / .30);
+  --l1: rgb(9 11 34 / .12);
+  --l2: rgb(9 11 34 / .22);
+  --l3: rgb(9 11 34 / .45);
+
+  --azione-fondo: var(--ink);
+  --azione-testo: var(--ivory);
+  --azione-hover: #1B2049;
+  --su-champagne: var(--ivory);
+}
+
+} /* fine @layer components */
 
 ::selection { background: var(--champagne); color: var(--ink); }
 

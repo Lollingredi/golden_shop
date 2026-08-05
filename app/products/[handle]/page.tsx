@@ -6,12 +6,10 @@ import {
   getProduct, getProducts, getProductsInCollection,
   getCollection, collectionOfProduct,
 } from "@/lib/catalog";
-import { formatMoney, fromPrice } from "@/lib/money";
 import Reveal, { RevealGrid } from "@/components/Reveal";
 import ProductCard from "@/components/ProductCard";
 import PlaceholderMedia from "@/components/PlaceholderMedia";
-import { AddProductButton } from "@/components/AddToCart";
-import { OperatorLink } from "@/components/Operator";
+import ScegliFormula from "@/components/ScegliFormula";
 
 type Params = { params: Promise<{ handle: string }> };
 
@@ -42,8 +40,8 @@ export default async function ProductPage({ params }: Params) {
 
   return (
     <>
-      <div className="px-6 lg:px-10 pt-[100px] lg:pt-[120px]">
-        <nav aria-label="Percorso" className="max-w-[1280px] mx-auto text-xs text-[var(--muted)] flex gap-2 flex-wrap">
+      <div className="sotto-header px-6 lg:px-10">
+        <nav aria-label="Percorso" className="contenuto text-xs text-[var(--muted)] flex gap-2 flex-wrap">
           <Link href="/collections" className="hover:text-[var(--champagne)] transition-colors">Catalogo</Link>
           {collection && (
             <>
@@ -54,12 +52,12 @@ export default async function ProductPage({ params }: Params) {
             </>
           )}
           <span>/</span>
-          <span className="text-white/70">{product.title}</span>
+          <span className="text-[var(--t2)]">{product.title}</span>
         </nav>
       </div>
 
       <section className="px-6 lg:px-10 py-10 lg:py-16">
-        <div className="max-w-[1280px] mx-auto grid gap-10 lg:grid-cols-2 lg:gap-16 items-start">
+        <div className="contenuto grid gap-10 lg:grid-cols-2 lg:gap-16 items-start">
           {/* Galleria */}
           <Reveal>
             <div className="relative aspect-[4/5] overflow-hidden bg-[var(--ink-800)]">
@@ -73,62 +71,36 @@ export default async function ProductPage({ params }: Params) {
           </Reveal>
 
           {/* Colonna acquisto — sticky su desktop */}
-          <Reveal delay={0.1} className="lg:sticky lg:top-[104px]">
+          <Reveal delay={0.1} className="lg:sticky lg:top-[calc(var(--h-header)+32px)]">
             <p className="kicker mb-4">{product.productType}</p>
-            <h1 className="font-display text-[clamp(30px,4vw,44px)] leading-tight mb-4">{product.title}</h1>
+            <h1 className="h-pagina mb-4">{product.title}</h1>
             <p className="text-sm text-[var(--muted)] mb-8">{product.vendor}</p>
 
-            <p className="font-display text-3xl text-[var(--champagne)] mb-2">
-              {fromPrice(product.priceRange.minVariantPrice)}
-            </p>
-            <p className="text-xs text-[var(--muted)] mb-10">
-              Prezzo indicativo. Varia con data, città e formula.
-            </p>
-
-            {/* Varianti — statiche: diventeranno selettori con Shopify */}
-            <fieldset className="mb-10">
-              <legend className="kicker mb-4">Formula</legend>
-              <div className="grid gap-3">
-                {product.variants.map((v, i) => (
-                  <div key={v.id}
-                    className={`flex justify-between items-center gap-4 border px-5 py-4 text-sm ${
-                      i === 0 ? "border-[var(--champagne)] text-white" : "border-white/15 text-white/70"
-                    }`}>
-                    <span>{v.title}</span>
-                    <span className={i === 0 ? "text-[var(--champagne)]" : ""}>{formatMoney(v.price)}</span>
-                  </div>
-                ))}
-              </div>
-            </fieldset>
-
-            <div className="flex flex-wrap gap-4 mb-4">
-              <AddProductButton
-                merchandiseId={product.variants[0].id}
-                title={product.title}
-                subtitle={product.variants[0].title}
-                imageUrl={img?.url ?? null}
-                unitPrice={Number(product.priceRange.minVariantPrice.amount)}
-              />
-              <Link href="/#richiesta"
-                className="border border-[var(--champagne)] text-[var(--champagne)] label px-10 py-4 hover:bg-[var(--champagne)] hover:text-[var(--ink)] transition-colors duration-200">
-                Richiedi disponibilità
-              </Link>
-            </div>
-            <OperatorLink
-              contesto={product.title}
-              className="label text-[var(--champagne)] py-4 mb-6 hover:text-white transition-colors"
+            {/* Prezzo, formula e acquisto stanno insieme perché si
+                influenzano: cambiare formula cambia prezzo e variante. */}
+            <ScegliFormula
+              variants={product.variants}
+              titolo={product.title}
+              imageUrl={img?.url ?? null}
             />
+
             {colHandle === "noleggio-auto" && (
-              <p className="text-sm leading-relaxed text-white/60 mb-10 border-l border-[var(--champagne)]/40 pl-4">
-                Questa è la base.{" "}
-                <Link href="/collections/noleggio-auto#configura" className="text-[var(--champagne)] hover:text-white transition-colors">
-                  Nel configuratore
-                </Link>{" "}
-                ci aggiungete rivelazione, fotografo, fiori e brindisi.
-              </p>
+              <Link
+                href="/collections/noleggio-auto#configura"
+                className="group block border border-[var(--champagne)]/35 bg-[var(--champagne)]/[0.06] px-6 py-5 mb-10 hover:border-[var(--champagne)] transition-colors"
+              >
+                <p className="kicker mb-2">Questa è solo la base</p>
+                <p className="text-[15px] leading-relaxed text-[var(--t2)]">
+                  Nel configuratore ci aggiungete rivelazione, fotografo, fiori
+                  e brindisi.{" "}
+                  <span className="text-[var(--champagne)] group-hover:underline">
+                    Componi l&apos;esperienza →
+                  </span>
+                </p>
+              </Link>
             )}
 
-            <dl className="grid gap-3 text-sm border-t border-white/10 pt-6">
+            <dl className="grid gap-3 text-sm border-t border-[var(--l1)] pt-6">
               {m.citta && (
                 <div className="flex justify-between gap-6"><dt className="text-[var(--muted)]">Città</dt><dd>{m.citta}</dd></div>
               )}
@@ -144,18 +116,18 @@ export default async function ProductPage({ params }: Params) {
       </section>
 
       {/* Descrizione + cosa include */}
-      <section className="px-6 lg:px-10 py-16 lg:py-24 bg-[var(--ink-800)]">
-        <div className="max-w-[1280px] mx-auto grid gap-12 lg:grid-cols-2 lg:gap-24">
+      <section className="sezione-stretta bg-[var(--ink-800)]">
+        <div className="contenuto grid gap-12 lg:grid-cols-2 lg:gap-24">
           <Reveal>
             <p className="kicker mb-6">Dettagli</p>
-            <p className="text-[17px] leading-relaxed text-white/80 max-w-[62ch]">{product.description}</p>
+            <p className="text-[17px] leading-relaxed text-[var(--t2)] max-w-[62ch]">{product.description}</p>
           </Reveal>
           {m.incluso && (
             <Reveal delay={0.1}>
               <p className="kicker mb-6">Cosa include</p>
               <ul className="grid gap-4">
                 {m.incluso.map((i) => (
-                  <li key={i} className="flex gap-4 text-[17px] leading-relaxed text-white/80 border-b border-white/10 pb-4">
+                  <li key={i} className="flex gap-4 text-[17px] leading-relaxed text-[var(--t2)] border-b border-[var(--l1)] pb-4">
                     <span className="text-[var(--champagne)]" aria-hidden>—</span>{i}
                   </li>
                 ))}
@@ -166,11 +138,11 @@ export default async function ProductPage({ params }: Params) {
       </section>
 
       {related.length > 0 && (
-        <section className="px-6 lg:px-10 py-20 lg:py-[120px]">
-          <div className="max-w-[1280px] mx-auto">
+        <section className="sezione">
+          <div className="contenuto">
             <Reveal>
               <p className="kicker mb-6">Dallo stesso servizio</p>
-              <h2 className="font-display text-3xl lg:text-[40px] leading-tight mb-16">Potrebbe interessarvi anche.</h2>
+              <h2 className="h-sezione mb-16">Potrebbe interessarvi anche.</h2>
             </Reveal>
             <RevealGrid className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {related.map((p) => <ProductCard key={p.handle} product={p} />)}

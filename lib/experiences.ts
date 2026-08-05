@@ -43,6 +43,9 @@ export type Addon = {
   description: string;
   price: Money;
   durata: string;
+  /** Miniatura 3:2 (900 × 600) mostrata in cima alla card del configuratore */
+  image: string;
+  imageAlt: string;
   /**
    * Add-on dello stesso gruppo si escludono a vicenda.
    * "racconto" — o il fotografo, o fotografo + video: non entrambi.
@@ -54,6 +57,8 @@ export const addons: Addon[] = [
   {
     id: "the-reveal",
     shopifyHandle: "addon-the-reveal",
+    image: "/images/addon-the-reveal.jpg",
+    imageAlt: "Dettaglio del nastro in raso rosso annodato sul telo nero teso",
     title: "The Reveal",
     contents: "Telo + fiocco",
     description:
@@ -64,6 +69,8 @@ export const addons: Addon[] = [
   {
     id: "memories",
     shopifyHandle: "addon-memories",
+    image: "/images/addon-memories.jpg",
+    imageAlt: "Fotografo di spalle, accovacciato, che scatta a una coppia sfocata accanto a un'auto scura",
     title: "Memories",
     contents: "Fotografo",
     description:
@@ -75,6 +82,8 @@ export const addons: Addon[] = [
   {
     id: "cinematic",
     shopifyHandle: "addon-cinematic",
+    image: "/images/addon-cinematic.jpg",
+    imageAlt: "Videomaker con camera su gimbal che cammina all'indietro accanto a un'auto scura",
     title: "Cinematic",
     contents: "Fotografo + video",
     description:
@@ -86,6 +95,8 @@ export const addons: Addon[] = [
   {
     id: "romance",
     shopifyHandle: "addon-romance",
+    image: "/images/addon-romance.jpg",
+    imageAlt: "Bouquet di rose chiare ed eucalipto sul sedile in pelle crema di un'auto scura",
     title: "Romance",
     contents: "Fiori",
     description:
@@ -96,6 +107,8 @@ export const addons: Addon[] = [
   {
     id: "party",
     shopifyHandle: "addon-party",
+    image: "/images/addon-party.jpg",
+    imageAlt: "Colonna di palloncini neri, rossi e champagne accanto a un'auto scura in garage",
     title: "Party",
     contents: "Palloncini",
     description:
@@ -106,6 +119,8 @@ export const addons: Addon[] = [
   {
     id: "celebration",
     shopifyHandle: "addon-celebration",
+    image: "/images/addon-celebration.jpg",
+    imageAlt: "Bottiglia di champagne nel secchiello d'acciaio con due calici sul cofano di un'auto scura",
     title: "Celebration",
     contents: "Bottiglia + calici",
     description:
@@ -116,6 +131,8 @@ export const addons: Addon[] = [
   {
     id: "road-trip",
     shopifyHandle: "addon-road-trip",
+    image: "/images/addon-road-trip.jpg",
+    imageAlt: "Vista aerea di un'auto scura su un tornante di montagna deserto all'alba",
     title: "Road Trip",
     contents: "Percorso panoramico",
     description:
@@ -126,6 +143,8 @@ export const addons: Addon[] = [
   {
     id: "birthday",
     shopifyHandle: "addon-birthday",
+    image: "/images/addon-birthday.jpg",
+    imageAlt: "Torta al cioccolato con candeline accese, fari d'auto e palloncini sfocati sullo sfondo",
     title: "Birthday",
     contents: "Torta + candeline",
     description:
@@ -161,8 +180,8 @@ export const packages: ExperiencePackage[] = [
     description:
       "La sorpresa allo stato puro: l'auto coperta, il fiocco, e qualcuno che fotografa la faccia nel momento esatto in cui il telo cade. È il pacchetto che ci chiedono più spesso, e quasi sempre di nascosto.",
     addonIds: ["the-reveal", "memories"],
-    image: "/images/urus-nastro-wide.jpg",
-    imageAlt: "Vettura coperta con nastro, prima della rivelazione",
+    image: "/images/pacchetto-big-reveal.jpg",
+    imageAlt: "Vettura coperta con telo nero e fiocco rosso, tre persone che si avvicinano al crepuscolo",
     evidenza: true,
   },
   {
@@ -173,8 +192,8 @@ export const packages: ExperiencePackage[] = [
     description:
       "Fiori scelti sul colore dell'auto, bottiglia fredda e calici pronti, un fotografo che sta a distanza e non interrompe. Anniversari e proposte: due terzi delle richieste di questo pacchetto finiscono con un sì.",
     addonIds: ["romance", "celebration", "memories"],
-    image: "/images/ferrari-notte.jpg",
-    imageAlt: "Dettaglio notturno di una vettura sportiva",
+    image: "/images/pacchetto-romantic-surprise.jpg",
+    imageAlt: "Due calici e una bottiglia in ghiaccio sul cofano di una vettura scura, di notte",
   },
   {
     id: "vip-birthday",
@@ -184,8 +203,8 @@ export const packages: ExperiencePackage[] = [
     description:
       "Allestimento a palloncini montato prima che arriviate, torta vera con le candeline, e le fotografie di tutti — non solo del festeggiato. Funziona dai diciotto ai sessanta.",
     addonIds: ["party", "birthday", "memories"],
-    image: "/images/urus-showroom.jpg",
-    imageAlt: "Vettura arancione allestita per una festa",
+    image: "/images/pacchetto-vip-birthday.jpg",
+    imageAlt: "Vettura scura incorniciata da un arco di palloncini, torta con candeline accese",
   },
   {
     id: "ultimate-experience",
@@ -195,8 +214,8 @@ export const packages: ExperiencePackage[] = [
     description:
       "Tutto insieme, coordinato da un referente unico che sta con voi dall'allestimento alla partenza: rivelazione, fiori, palloncini, brindisi e il servizio fotografico completo.",
     addonIds: ["the-reveal", "romance", "party", "celebration", "memories"],
-    image: "/images/showroom.jpg",
-    imageAlt: "Vettura in showroom pronta per la consegna",
+    image: "/images/pacchetto-ultimate-experience.jpg",
+    imageAlt: "Cortile di villa allestito all'ora blu: auto coperta, palloncini, fiori e fotografo al lavoro",
   },
 ];
 

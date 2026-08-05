@@ -4,6 +4,9 @@ const fmt = new Intl.NumberFormat("it-IT", {
   style: "currency",
   currency: "EUR",
   maximumFractionDigits: 0,
+  /* Senza, Intl non raggruppa i numeri a quattro cifre: usciva
+     "1900 €" invece di "1.900 €", su tutti i prezzi sotto i diecimila. */
+  useGrouping: true,
 });
 
 /** "1900.00" → "€ 1.900" */

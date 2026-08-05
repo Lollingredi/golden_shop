@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAccount, useOperator } from "@/components/StoreProvider";
 import { formatAmount } from "@/lib/money";
 import Reveal from "@/components/Reveal";
 import { packages } from "@/lib/experiences";
+import { Bottone, BottoneLink } from "@/components/Bottone";
 
 /* ────────────────────────────────────────────────────────────────
    Area personale.
@@ -21,8 +21,8 @@ import { packages } from "@/lib/experiences";
 
 const STATO_COLORE: Record<string, string> = {
   "In lavorazione": "text-[var(--champagne)] border-[var(--champagne)]/40",
-  Confermata: "text-white border-white/30",
-  Conclusa: "text-[var(--muted)] border-white/15",
+  Confermata: "text-white border-[var(--l2)]",
+  Conclusa: "text-[var(--muted)] border-[var(--l2)]",
 };
 
 export default function AccountPage() {
@@ -40,8 +40,8 @@ export default function AccountPage() {
 
   if (!hydrated || !account) {
     return (
-      <section className="px-6 lg:px-10 pt-[160px] pb-24 min-h-[60vh]">
-        <p className="max-w-[1280px] mx-auto text-[var(--muted)]">Un istante…</p>
+      <section className="zona-chiara pagina-top px-6 lg:px-10 pb-24 min-h-[60vh]">
+        <p className="contenuto text-[var(--muted)]">Un istante…</p>
       </section>
     );
   }
@@ -49,13 +49,14 @@ export default function AccountPage() {
   const salvatiPkg = packages.filter((p) => salvati.includes(p.id));
 
   return (
-    <>
-      <section className="px-6 lg:px-10 pt-[140px] lg:pt-[180px] pb-16">
-        <div className="max-w-[1280px] mx-auto flex flex-wrap gap-8 justify-between items-end">
+    /* Tutta l'area personale su fondo chiaro: è la zona amministrativa */
+    <div className="zona-chiara pb-4">
+      <section className="pagina-top px-6 lg:px-10 pb-16">
+        <div className="contenuto flex flex-wrap gap-8 justify-between items-end">
           <Reveal>
             <p className="kicker mb-6">Area personale</p>
-            <h1 className="font-display text-[clamp(32px,5vw,52px)] leading-tight capitalize">
-              {account.nome}
+            <h1 className="h-pagina capitalize">
+              {account.nome || "Il vostro account"}
             </h1>
             <p className="text-sm text-[var(--muted)] mt-3">
               {account.email} · dal{" "}
@@ -66,48 +67,45 @@ export default function AccountPage() {
             </p>
           </Reveal>
           <Reveal delay={0.08}>
-            <button
-              type="button"
+            <Bottone
+              aspetto="tenue"
+              misura="sm"
               onClick={() => {
                 logout();
                 router.push("/");
               }}
-              className="label text-white/50 border-b border-white/20 pb-1 hover:text-white hover:border-white transition-colors"
             >
               Esci
-            </button>
+            </Bottone>
           </Reveal>
         </div>
       </section>
 
       {/* ── Richieste ──────────────────────────────────────────── */}
       <section className="px-6 lg:px-10 pb-20">
-        <div className="max-w-[1280px] mx-auto">
+        <div className="contenuto">
           <Reveal>
-            <h2 className="font-display text-2xl lg:text-3xl mb-8 border-t border-white/10 pt-10">
+            <h2 className="h-sezione mb-8 border-t border-[var(--l1)] pt-10">
               Le vostre richieste
             </h2>
           </Reveal>
 
           {richieste.length === 0 ? (
             <Reveal delay={0.08}>
-              <div className="border border-white/12 px-8 py-12 text-center">
-                <p className="text-[17px] text-white/60 mb-6">
+              <div className="border border-[var(--l1)] px-8 py-12 text-center">
+                <p className="text-[17px] text-[var(--t2)] mb-6">
                   Nessuna richiesta, per ora.
                 </p>
-                <Link
-                  href="/collections/noleggio-auto#configura"
-                  className="inline-block bg-[var(--champagne)] text-[var(--ink)] label px-8 py-4 hover:bg-white transition-colors"
-                >
+                <BottoneLink href="/collections/noleggio-auto#configura">
                   Componi un&apos;esperienza
-                </Link>
+                </BottoneLink>
               </div>
             </Reveal>
           ) : (
             <div className="grid gap-4">
               {richieste.map((r) => (
                 <Reveal key={r.id} delay={0.04}>
-                  <article className="border border-white/12 px-6 py-6 grid gap-5">
+                  <article className="border border-[var(--l1)] px-6 py-6 grid gap-5">
                     <div className="flex flex-wrap gap-4 justify-between items-start">
                       <div>
                         <p className="text-xs text-[var(--muted)] tracking-[0.15em]">{r.id}</p>
@@ -128,33 +126,47 @@ export default function AccountPage() {
                       </span>
                     </div>
 
-                    <ul className="grid gap-2 border-t border-white/10 pt-4">
-                      {r.lines.map((l) => (
-                        <li key={l.id} className="flex flex-wrap gap-x-4 justify-between text-[15px]">
-                          <span className="text-white/75">
-                            {l.quantity > 1 && `${l.quantity} × `}
-                            {l.title}
-                            {l.subtitle && (
-                              <span className="text-[var(--muted)]"> — {l.subtitle}</span>
-                            )}
-                          </span>
-                          <span className="text-white/50">
-                            {formatAmount(l.unitPrice * l.quantity)}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                    {/* Richiesta dal carrello: le righe. Richiesta libera dal
+                        modulo: `lines` è vuoto e vale `oggetto`. */}
+                    {r.lines.length > 0 ? (
+                      <ul className="grid gap-2 border-t border-[var(--l1)] pt-4">
+                        {r.lines.map((l) => (
+                          <li key={l.id} className="flex flex-wrap gap-x-4 justify-between text-[15px]">
+                            <span className="text-[var(--t2)]">
+                              {l.quantity > 1 && `${l.quantity} × `}
+                              {l.title}
+                              {l.subtitle && (
+                                <span className="text-[var(--muted)]"> — {l.subtitle}</span>
+                              )}
+                            </span>
+                            <span className="text-[var(--t3)]">
+                              {formatAmount(l.unitPrice * l.quantity)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="border-t border-[var(--l1)] pt-4 text-[15px]">
+                        <span className="text-[var(--t2)]">{r.oggetto ?? "Richiesta libera"}</span>
+                        {r.origine && (
+                          <span className="text-[var(--muted)]"> — {r.origine}</span>
+                        )}
+                      </div>
+                    )}
 
-                    <div className="flex flex-wrap gap-4 justify-between items-baseline border-t border-white/10 pt-4">
-                      <button
-                        type="button"
-                        onClick={() => operator.open(`Richiesta ${r.id}`)}
-                        className="label text-[var(--champagne)] hover:text-white transition-colors"
-                      >
-                        Parla con un operatore
-                      </button>
-                      <span className="font-display text-xl text-[var(--champagne)]">
-                        {formatAmount(r.totale)}
+                    <div className="flex flex-wrap gap-4 justify-between items-baseline border-t border-[var(--l1)] pt-4">
+                      <Bottone type="button" onClick={() => operator.open(`Richiesta ${r.id}`)} aspetto="testo">
+                        Parla con un concierge
+                      </Bottone>
+                      <span className="text-right">
+                        <span className="font-display text-xl text-[var(--champagne)] block">
+                          {r.totale > 0 ? formatAmount(r.totale) : "Da quotare"}
+                        </span>
+                        {r.pagato != null && r.pagato > 0 && (
+                          <span className="text-xs text-[var(--muted)]">
+                            Pagato per intero
+                          </span>
+                        )}
                       </span>
                     </div>
                   </article>
@@ -167,15 +179,15 @@ export default function AccountPage() {
 
       {/* ── Salvati ────────────────────────────────────────────── */}
       <section className="px-6 lg:px-10 pb-20">
-        <div className="max-w-[1280px] mx-auto">
+        <div className="contenuto">
           <Reveal>
-            <h2 className="font-display text-2xl lg:text-3xl mb-8 border-t border-white/10 pt-10">
+            <h2 className="h-sezione mb-8 border-t border-[var(--l1)] pt-10">
               Esperienze salvate
             </h2>
           </Reveal>
           {salvatiPkg.length === 0 ? (
             <Reveal delay={0.08}>
-              <p className="text-[17px] text-white/50 max-w-[56ch] leading-relaxed">
+              <p className="text-[17px] text-[var(--t3)] max-w-[56ch] leading-relaxed">
                 Niente di salvato. Dalle schede dei pacchetti potete tenere da
                 parte quello che vi interessa e ritrovarlo qui.
               </p>
@@ -184,7 +196,7 @@ export default function AccountPage() {
             <div className="grid gap-3 sm:grid-cols-2">
               {salvatiPkg.map((p) => (
                 <Reveal key={p.id} delay={0.04}>
-                  <div className="border border-white/12 px-6 py-5 flex justify-between gap-4 items-center">
+                  <div className="border border-[var(--l1)] px-6 py-5 flex justify-between gap-4 items-center">
                     <div>
                       <p className="font-display text-xl">{p.title}</p>
                       <p className="text-xs text-[var(--muted)] mt-1">{p.claim}</p>
@@ -192,7 +204,7 @@ export default function AccountPage() {
                     <button
                       type="button"
                       onClick={() => toggleSalvato(p.id)}
-                      className="text-xs text-[var(--muted)] hover:text-white transition-colors shrink-0"
+                      className="text-xs text-[var(--muted)] hover:text-[var(--t1)] transition-colors shrink-0"
                     >
                       Togli
                     </button>
@@ -206,17 +218,13 @@ export default function AccountPage() {
 
       {/* ── Dati ───────────────────────────────────────────────── */}
       <section className="px-6 lg:px-10 pb-24">
-        <div className="max-w-[1280px] mx-auto">
+        <div className="contenuto">
           <Reveal>
-            <div className="flex flex-wrap gap-4 justify-between items-baseline border-t border-white/10 pt-10 mb-8">
-              <h2 className="font-display text-2xl lg:text-3xl">I vostri dati</h2>
-              <button
-                type="button"
-                onClick={() => setModifica((v) => !v)}
-                className="label text-[var(--champagne)] hover:text-white transition-colors"
-              >
+            <div className="flex flex-wrap gap-4 justify-between items-baseline border-t border-[var(--l1)] pt-10 mb-8">
+              <h2 className="h-sezione">I vostri dati</h2>
+              <Bottone type="button" onClick={() => setModifica((v) => !v)} aspetto="testo">
                 {modifica ? "Chiudi" : "Modifica"}
-              </button>
+              </Bottone>
             </div>
           </Reveal>
 
@@ -229,7 +237,7 @@ export default function AccountPage() {
                   ["citta", "Città"],
                 ] as const
               ).map(([campo, etichetta]) => (
-                <div key={campo} className="flex justify-between gap-6 border-b border-white/10 pb-3">
+                <div key={campo} className="flex justify-between gap-6 border-b border-[var(--l1)] pb-3">
                   <dt className="text-[var(--muted)]">{etichetta}</dt>
                   <dd className="text-right">
                     {modifica ? (
@@ -239,7 +247,7 @@ export default function AccountPage() {
                         className="bg-transparent border-b border-[var(--champagne)]/40 text-right outline-none focus:border-[var(--champagne)] transition-colors"
                       />
                     ) : (
-                      account[campo] || <span className="text-white/30">non indicato</span>
+                      account[campo] || <span className="text-[var(--t4)]">non indicato</span>
                     )}
                   </dd>
                 </div>
@@ -252,6 +260,6 @@ export default function AccountPage() {
           </Reveal>
         </div>
       </section>
-    </>
+    </div>
   );
 }
