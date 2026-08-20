@@ -17,6 +17,14 @@ import type { ComponentProps, ReactNode } from "react";
 export type Aspetto = "primario" | "contorno" | "testo" | "tenue";
 export type Misura = "md" | "sm";
 
+/*
+ * Attenzione: `inline-flex` è qui dentro, e in Tailwind fra due utility
+ * di `display` vince l'ordine nel foglio di stile, non quello scritto
+ * nell'attributo class. Passare `className="hidden"` a un <Bottone>
+ * quindi NON lo nasconde. Per mostrarlo o nasconderlo a certe misure,
+ * mettere `hidden`/`sm:hidden` su un contenitore attorno al pulsante
+ * (`<span className="hidden sm:contents">`), non sul pulsante stesso.
+ */
 const BASE =
   "label inline-flex items-center justify-center text-center transition-colors duration-200 disabled:opacity-40 disabled:pointer-events-none";
 

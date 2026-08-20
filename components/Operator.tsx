@@ -7,6 +7,14 @@ import { useAccount, useCart, useOperator } from "./StoreProvider";
 import { Bottone, BottoneA, type Aspetto, type Misura } from "./Bottone";
 import { useTrappolaFocus } from "./useTrappolaFocus";
 import { STORAGE_KEYS, readStorage, writeStorage } from "@/lib/store";
+import { inviaModulo } from "@/lib/invia";
+import {
+  TELEFONO,
+  TELEFONO_HREF,
+  WHATSAPP_HREF,
+  CONTATTI_VERI,
+  ORARIO,
+} from "@/lib/contatti";
 
 /* ────────────────────────────────────────────────────────────────
    "Parla con un concierge" — un solo pannello, quattro inneschi.
@@ -23,17 +31,20 @@ import { STORAGE_KEYS, readStorage, writeStorage } from "@/lib/store";
    4. Fine schermata dettagli → <OperatorBand /> dopo il configuratore
    ──────────────────────────────────────────────────────────────── */
 
-const TELEFONO = "+39 000 000 0000";
-const TELEFONO_HREF = "tel:+390000000000";
-const WHATSAPP_HREF = "https://wa.me/390000000000";
+/* Numeri e orari stanno in lib/contatti.ts: erano scritti a mano qui e
+   in QuoteTab.tsx, cioè in due posti da ricordarsi. */
 
-/** Lun–sab 9–20. Calcolato dopo il montaggio: l'ora del server non conta. */
+/** Calcolato dopo il montaggio: l'ora del server non conta niente. */
 function useInLinea(): boolean | null {
   const [inLinea, setInLinea] = useState<boolean | null>(null);
   useEffect(() => {
     const ora = new Date();
     const giorno = ora.getDay(); // 0 = domenica
-    setInLinea(giorno !== 0 && ora.getHours() >= 9 && ora.getHours() < 20);
+    setInLinea(
+      !(ORARIO.giorniChiusi as readonly number[]).includes(giorno) &&
+        ora.getHours() >= ORARIO.dalle &&
+        ora.getHours() < ORARIO.alle
+    );
   }, []);
   return inLinea;
 }
@@ -47,20 +58,40 @@ export function OperatorDialog() {
   const inLinea = useInLinea();
   const panelRef = useRef<HTMLDivElement>(null);
   const [inviato, setInviato] = useState(false);
+  const [inCorso, setInCorso] = useState(false);
+  /** null = non ancora inviata. false = non recapitata. */
+  const [recapitata, setRecapitata] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (operator.isOpen) setInviato(false);
+    if (operator.isOpen) {
+      setInviato(false);
+      setRecapitata(null);
+    }
   }, [operator.isOpen]);
 
   /* Il focus resta nel pannello finché è aperto, e alla chiusura
      torna al pulsante che l'ha aperto. */
   useTrappolaFocus(panelRef, operator.isOpen);
 
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    // Nessun backend: la richiamata si registra e basta.
-    // Con Shopify/CRM qui parte la POST verso l'endpoint di contatto.
+    if (inCorso) return;
+    setInCorso(true);
+
+    /* I campi si leggono dal form: sono `defaultValue`, non stato
+       controllato, perché il pannello si smonta a ogni chiusura. */
+    const dati = new FormData(e.currentTarget);
+    const esito = await inviaModulo("Richiamata concierge", {
+      Nome: String(dati.get("nome") ?? ""),
+      Telefono: String(dati.get("telefono") ?? ""),
+      Quando: String(dati.get("quando") ?? ""),
+      Contesto: operator.contesto ?? "—",
+      Email: account?.email,
+    });
+
+    setRecapitata(esito.ok);
     setInviato(true);
+    setInCorso(false);
   }
 
   return (
@@ -116,13 +147,17 @@ export function OperatorDialog() {
               <p className="flex items-center gap-2 text-xs text-[var(--muted)] mb-6">
                 <FiClock className="w-3.5 h-3.5" aria-hidden />
                 {inLinea === null
-                  ? "Lunedì–sabato, 9:00 – 20:00"
+                  ? ORARIO.testo
                   : inLinea
                     ? "Adesso c'è qualcuno in linea"
                     : "Fuori orario — lasciate un numero, richiamiamo domani"}
               </p>
 
-              <div className="grid gap-3 mb-8">
+              {/* Le due vie dirette compaiono solo con numeri veri: un
+                  pulsante "Chiamate adesso" che compone lo zero fa più
+                  danno di un pulsante che non c'è. Senza, resta il
+                  modulo di richiamata, che invece funziona. */}
+              <div className={`grid gap-3 mb-8 ${CONTATTI_VERI ? "" : "hidden"}`}>
                 <a
                   href={TELEFONO_HREF}
                   className="flex items-center gap-4 border border-[var(--l2)] px-5 py-4 hover:border-[var(--champagne)] transition-colors group"
@@ -150,13 +185,37 @@ export function OperatorDialog() {
               </div>
 
               {inviato ? (
-                <div className="border border-[var(--champagne)]/40 bg-[var(--champagne)]/[0.07] px-5 py-6">
-                  <p className="font-display text-xl leading-tight mb-2">Vi richiamiamo noi.</p>
-                  <p className="text-[14px] leading-relaxed text-[var(--t2)]">
-                    La richiesta è registrata. Se siamo in orario sentirete
-                    squillare entro un&apos;ora, altrimenti domani in mattinata.
-                  </p>
-                </div>
+                recapitata ? (
+                  <div className="border border-[var(--champagne)]/40 bg-[var(--champagne)]/[0.07] px-5 py-6">
+                    <p className="font-display text-xl leading-tight mb-2">Vi richiamiamo noi.</p>
+                    <p className="text-[14px] leading-relaxed text-[var(--t2)]">
+                      La richiesta è arrivata. Se siamo in orario sentirete
+                      squillare entro un&apos;ora, altrimenti domani in mattinata.
+                    </p>
+                  </div>
+                ) : (
+                  /* Non recapitata: si dichiara, e si rimanda ai due
+                     contatti diretti qui sopra. Mai una finta conferma. */
+                  <div className="border border-[var(--l2)] px-5 py-6">
+                    <p className="font-display text-xl leading-tight mb-2">
+                      Non è partita.
+                    </p>
+                    <p className="text-[14px] leading-relaxed text-[var(--t2)]">
+                      Qualcosa ha bloccato l&apos;invio e la richiesta di
+                      richiamata non è arrivata. Usate il telefono o WhatsApp
+                      qui sopra: è più veloce comunque.
+                    </p>
+                    <Bottone
+                      type="button"
+                      aspetto="testo"
+                      misura="sm"
+                      className="mt-3 -ml-2"
+                      onClick={() => setInviato(false)}
+                    >
+                      Riprova
+                    </Bottone>
+                  </div>
+                )
               ) : (
                 <form onSubmit={onSubmit} className="grid gap-4">
                   <p className="kicker">Oppure fatevi richiamare</p>
@@ -193,8 +252,8 @@ export function OperatorDialog() {
                       <option>In serata</option>
                     </select>
                   </label>
-                  <Bottone type="submit" pieno className="mt-2">
-                    Richiedi una chiamata
+                  <Bottone type="submit" pieno className="mt-2" disabled={inCorso}>
+                    {inCorso ? "Un istante…" : "Richiedi una chiamata"}
                   </Bottone>
                   <p className="text-[11px] leading-relaxed text-[var(--muted)]">
                     Il numero serve solo per questa chiamata. Nessuna newsletter.
@@ -291,9 +350,11 @@ export function OperatorBand({
         </div>
         <div className="flex flex-wrap gap-4 lg:justify-end">
           <Bottone onClick={() => operator.open(contesto)}>Parla con un concierge</Bottone>
-          <BottoneA href={WHATSAPP_HREF} target="_blank" rel="noopener noreferrer">
-            WhatsApp
-          </BottoneA>
+          {CONTATTI_VERI && (
+            <BottoneA href={WHATSAPP_HREF} target="_blank" rel="noopener noreferrer">
+              WhatsApp
+            </BottoneA>
+          )}
         </div>
       </div>
     </section>

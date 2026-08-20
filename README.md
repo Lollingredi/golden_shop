@@ -8,8 +8,10 @@ un file TypeScript, lo stato dell'utente vive in `localStorage`.
 | File | Per chi |
 |---|---|
 | **`TECNICO.md`** | Come funziona tutto e cosa resta da implementare |
+| **`PIANO-TECH.md`** | Front-end e back-end nei prossimi 12 mesi, trimestre per trimestre |
 | **`SOCI.md`** | A che punto siamo, in italiano non tecnico |
-| `PROMPT-IMMAGINI.md` | Le 23 fotografie mancanti, con i testi per produrle |
+| `SHOPIFY-AVVIO.md` | La procedura per collegare il sito a Shopify, fase per fase |
+| `PROMPT-IMMAGINI.md` | I prompt delle 23 fotografie, ormai prodotte |
 | `RIPARTI.txt` | Installazione pulita, se npm fa i capricci |
 
 Questo README resta la scheda d'avvio. Per tutto il resto, `TECNICO.md`.

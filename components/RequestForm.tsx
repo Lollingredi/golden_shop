@@ -3,8 +3,10 @@
 import { useState, type FormEvent } from "react";
 import { useAccount, useOperator } from "./StoreProvider";
 import type { Richiesta } from "@/lib/store";
+import { inviaModulo } from "@/lib/invia";
+import { TELEFONO, TELEFONO_HREF, WHATSAPP_HREF, CONTATTI_VERI } from "@/lib/contatti";
 import Reveal from "./Reveal";
-import { Bottone, BottoneLink } from "./Bottone";
+import { Bottone, BottoneLink, BottoneA } from "./Bottone";
 
 /* ────────────────────────────────────────────────────────────────
    Modulo di richiesta libera.
@@ -15,8 +17,18 @@ import { Bottone, BottoneLink } from "./Bottone";
    la stessa entità che produce il checkout, così finisce nello
    stesso elenco dell'area personale.
 
+   L'invio vero passa da `lib/invia.ts`. Due cose importanti:
+
+   1. La richiesta si registra in locale **comunque**, anche se
+      l'invio fallisce: il cliente la ritrova nell'area personale e
+      noi non perdiamo quello che aveva scritto.
+   2. Se l'invio non riesce non si dice "vi ricontattiamo": si dice
+      che non è arrivata e si danno telefono e WhatsApp. Una finta
+      conferma è peggio di un errore dichiarato.
+
    PER SHOPIFY: qui si crea una DraftOrder vuota con note, oppure si
-   fa una POST al CRM. Il resto della schermata non cambia.
+   fa una POST al CRM. Cambia il corpo di `inviaModulo`, non questa
+   schermata.
    ──────────────────────────────────────────────────────────────── */
 
 const COSA = [
@@ -36,25 +48,42 @@ export default function RequestForm({ origine = "Modulo" }: { origine?: string }
   const [nome, setNome] = useState(account?.nome ?? "");
   const [contatto, setContatto] = useState(account?.telefono ?? account?.email ?? "");
   const [inviata, setInviata] = useState<Richiesta | null>(null);
+  const [inCorso, setInCorso] = useState(false);
+  /** null = non ancora inviata. false = registrata ma non recapitata. */
+  const [recapitata, setRecapitata] = useState<boolean | null>(null);
 
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (inCorso) return;
+    setInCorso(true);
 
     /* Se il contatto è un'email e non c'è sessione, la richiesta
        diventa anche il primo accesso: così la si ritrova. */
     if (!account && contatto.includes("@")) login(contatto, nome);
     else if (account) update({ nome, citta: dove });
 
-    setInviata(
-      registraRichiesta({
-        lines: [],
-        totale: 0,
-        oggetto: cosa,
-        data: quando || undefined,
-        citta: dove || undefined,
-        origine,
-      })
-    );
+    const r = registraRichiesta({
+      lines: [],
+      totale: 0,
+      oggetto: cosa,
+      data: quando || undefined,
+      citta: dove || undefined,
+      origine,
+    });
+
+    const esito = await inviaModulo("Richiesta dal sito", {
+      Codice: r.id,
+      Servizio: cosa,
+      Quando: quando,
+      Dove: dove,
+      Nome: nome,
+      Contatto: contatto,
+      Origine: origine,
+    });
+
+    setRecapitata(esito.ok);
+    setInviata(r);
+    setInCorso(false);
   }
 
   return (
@@ -63,24 +92,68 @@ export default function RequestForm({ origine = "Modulo" }: { origine?: string }
         <Reveal>
           <p className="kicker mb-6">Richiesta</p>
           <h2 className="h-sezione mb-6 max-w-[18ch]">
-            {inviata ? "Ci siamo." : "Raccontateci la giornata."}
+            {!inviata
+              ? "Raccontateci la giornata."
+              : recapitata
+                ? "Ci siamo."
+                : "Scrivetela a noi a voce."}
           </h2>
 
           {inviata ? (
             <div className="max-w-[520px]">
-              <p className="text-[17px] leading-relaxed text-[var(--t2)] mb-8">
-                La richiesta <span className="text-[var(--champagne)]">{inviata.id}</span> è
-                registrata. Vi ricontattiamo entro poche ore, sempre da parte di
-                una persona. Nessun pagamento in questa fase.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <BottoneLink href="/account">
-                  Vedi la richiesta
-                </BottoneLink>
-                <Bottone type="button" onClick={() => setInviata(null)} aspetto="tenue">
-                  Mandane un&apos;altra
-                </Bottone>
-              </div>
+              {recapitata ? (
+                <>
+                  <p className="text-[17px] leading-relaxed text-[var(--t2)] mb-8">
+                    La richiesta <span className="text-[var(--champagne)]">{inviata.id}</span> è
+                    arrivata. Vi ricontattiamo entro poche ore, sempre da parte di
+                    una persona. Nessun pagamento in questa fase.
+                  </p>
+                  <div className="flex flex-wrap gap-4">
+                    <BottoneLink href="/account">
+                      Vedi la richiesta
+                    </BottoneLink>
+                    <Bottone type="button" onClick={() => setInviata(null)} aspetto="tenue">
+                      Mandane un&apos;altra
+                    </Bottone>
+                  </div>
+                </>
+              ) : (
+                /* Invio fallito, o endpoint non ancora configurato. Si dice
+                   com'è: la richiesta è salvata qui ma a noi non è arrivata.
+                   Promettere una chiamata che non arriverà è il modo più
+                   rapido di perdere il cliente due volte. */
+                <>
+                  <p className="text-[17px] leading-relaxed text-[var(--t2)] mb-8">
+                    Non siamo riusciti a inoltrarla: resta salvata qui come{" "}
+                    <span className="text-[var(--champagne)]">{inviata.id}</span>, ma
+                    a noi non è ancora arrivata. Il modo più rapido è dircelo a
+                    voce — bastano due minuti.
+                  </p>
+                  <div className="flex flex-wrap gap-4">
+                    {CONTATTI_VERI ? (
+                      <>
+                        <BottoneA href={TELEFONO_HREF} aspetto="primario">
+                          {TELEFONO}
+                        </BottoneA>
+                        <BottoneA
+                          href={WHATSAPP_HREF}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          WhatsApp
+                        </BottoneA>
+                      </>
+                    ) : (
+                      <Bottone type="button" onClick={() => operator.open(origine)}>
+                        Parla con un concierge
+                      </Bottone>
+                    )}
+                    <Bottone type="button" onClick={() => setInviata(null)} aspetto="tenue">
+                      Riprova
+                    </Bottone>
+                  </div>
+                </>
+              )}
             </div>
           ) : (
             <form onSubmit={onSubmit} className="grid gap-10 max-w-[520px]">
@@ -139,8 +212,8 @@ export default function RequestForm({ origine = "Modulo" }: { origine?: string }
               </div>
 
               <div className="flex flex-wrap gap-4 items-center">
-                <Bottone type="submit">
-                  Invia la richiesta
+                <Bottone type="submit" disabled={inCorso}>
+                  {inCorso ? "Un istante…" : "Invia la richiesta"}
                 </Bottone>
                 <Bottone type="button" onClick={() => operator.open(origine)} aspetto="testo">
                   Parla con un concierge

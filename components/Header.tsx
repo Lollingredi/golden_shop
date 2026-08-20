@@ -89,6 +89,43 @@ export default function Header() {
   }, []);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
+  /**
+   * La tendina esiste solo dove esiste un puntatore vero.
+   *
+   * Su touch il browser emula il passaggio del mouse: il primo tocco su
+   * "Catalogo" fa scattare `mouseenter`, la tendina si apre — e un
+   * `mouseleave` non arriva mai. Se il tocco non cambia pagina (perché
+   * siamo già sotto `/collections`) resta aperta sopra il contenuto
+   * senza una via d'uscita. Sui telefoni non si vedeva perché la barra
+   * è `hidden lg:flex`, ma sui tablet in orizzontale sì.
+   *
+   * `matchMedia` parte a false anche sul server, quindi il primo render
+   * combacia e non c'è disallineamento di idratazione. Dove il mouse
+   * non c'è, "Catalogo" torna a essere un link e basta, e i tre servizi
+   * si raggiungono dal menu hamburger.
+   */
+  const [conPuntatore, setConPuntatore] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const sincronizza = () => setConPuntatore(mq.matches);
+    sincronizza();
+    mq.addEventListener("change", sincronizza);
+    return () => mq.removeEventListener("change", sincronizza);
+  }, []);
+
+  /* Rete di sicurezza: qualunque cosa succeda, un tocco o un clic fuori
+     dalla tendina la chiude. Senza, un `mouseleave` mancato la lascia
+     appesa a tempo indeterminato. */
+  const contenitore = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!tendina) return;
+    const fuori = (e: PointerEvent) => {
+      if (!contenitore.current?.contains(e.target as Node)) chiudi(true);
+    };
+    document.addEventListener("pointerdown", fuori);
+    return () => document.removeEventListener("pointerdown", fuori);
+  }, [tendina, chiudi]);
+
   useEffect(() => {
     setOpen(false);
     setTendina(false);
@@ -103,23 +140,35 @@ export default function Header() {
           : "bg-gradient-to-b from-[var(--ink)]/70 to-transparent"
       }`}
     >
-      <div className="contenuto px-6 lg:px-10 h-[var(--h-header)] grid grid-cols-[1fr_auto_1fr] items-center gap-6">
+      {/* gap-3 sotto i 640px: con 24px fissi, hamburger + logo + due icone
+          chiedevano più larghezza di uno schermo da 360px. */}
+      <div className="contenuto px-6 lg:px-10 h-[var(--h-header)] grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-6">
         {/* sinistra — desktop */}
         <nav className="hidden lg:flex gap-7 items-center label text-white/70">
           {/*
             "Catalogo" resta un link vero e cliccabile: la tendina è una
             scorciatoia ai tre servizi, non l'unico modo per arrivarci.
-            Si apre al passaggio del mouse e anche col focus da tastiera
-            (onFocus/onBlur risalgono dai figli), si chiude con Escape.
+            Si apre al passaggio del mouse e col focus da tastiera
+            (onFocus/onBlur risalgono dai figli), si chiude con Escape,
+            con un clic fuori, o cambiando pagina.
+
+            Gli handler di hover si attaccano solo se `conPuntatore`:
+            vedi la nota sopra: su touch aprivano una tendina che poi
+            nessun evento richiudeva.
           */}
           <div
+            ref={contenitore}
             className="relative"
-            onMouseEnter={apri}
-            onMouseLeave={() => chiudi()}
-            onFocus={apri}
-            onBlur={(e) => {
-              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) chiudi(true);
-            }}
+            onMouseEnter={conPuntatore ? apri : undefined}
+            onMouseLeave={conPuntatore ? () => chiudi() : undefined}
+            onFocus={conPuntatore ? apri : undefined}
+            onBlur={
+              conPuntatore
+                ? (e) => {
+                    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) chiudi(true);
+                  }
+                : undefined
+            }
             onKeyDown={(e) => {
               if (e.key === "Escape" && tendina) {
                 chiudi(true);
@@ -129,9 +178,9 @@ export default function Header() {
           >
             <Link
               href="/collections"
-              aria-haspopup="true"
-              aria-expanded={tendina}
-              aria-controls={tendinaId}
+              aria-haspopup={conPuntatore ? "true" : undefined}
+              aria-expanded={conPuntatore ? tendina : undefined}
+              aria-controls={conPuntatore ? tendinaId : undefined}
               /* whitespace-nowrap: senza, "Noleggio auto" andava a capo e la
                  barra diventava alta due righe di testo dentro 72px. */
               className={`py-2 whitespace-nowrap flex items-center gap-2 transition-colors duration-150 hover:text-[var(--champagne)] ${
@@ -139,12 +188,16 @@ export default function Header() {
               }`}
             >
               Catalogo
-              <FiChevronDown
-                aria-hidden
-                className={`w-[13px] h-[13px] transition-transform duration-200 ${
-                  tendina ? "rotate-180" : ""
-                }`}
-              />
+              {/* Niente freccia dove la tendina non si apre: prometterebbe
+                  un menu che non arriva mai. */}
+              {conPuntatore && (
+                <FiChevronDown
+                  aria-hidden
+                  className={`w-[13px] h-[13px] transition-transform duration-200 ${
+                    tendina ? "rotate-180" : ""
+                  }`}
+                />
+              )}
             </Link>
 
             <AnimatePresence>
@@ -201,7 +254,9 @@ export default function Header() {
         {/* centro — logo */}
         <Link
           href="/"
-          className="font-display text-[20px] tracking-[0.34em] pl-[0.34em] text-[var(--champagne)] whitespace-nowrap"
+          /* Il tracking largo è metà della larghezza del logo: stretto di
+             un filo sui telefoni, com'era da 640px in su. */
+          className="font-display text-[17px] sm:text-[20px] tracking-[0.26em] sm:tracking-[0.34em] pl-[0.26em] sm:pl-[0.34em] text-[var(--champagne)] whitespace-nowrap"
         >
           GOLDEN
         </Link>
@@ -233,10 +288,21 @@ export default function Header() {
           </button>
 
           {/* Era px-6 py-[11px]: 41px di altezza, sotto la soglia di tocco.
-              Ora la misura arriva da <Bottone>, che parte da 44px. */}
-          <BottoneLink href="/#richiesta" aspetto="contorno" misura="sm" className="hidden sm:inline-flex">
-            Richiedi
-          </BottoneLink>
+              Ora la misura arriva da <Bottone>, che parte da 44px.
+
+              Il `hidden` sta sullo <span>, non sul pulsante: <Bottone>
+              mette `inline-flex` nelle sue classi di base e in Tailwind
+              vince l'ordine nel foglio di stile, non quello nell'attributo
+              class. `className="hidden"` sul pulsante quindi non lo
+              nascondeva: a 375px "Richiedi" restava in barra e l'header
+              chiedeva 490px di larghezza dentro 375. `sm:contents` fa
+              sparire lo span dal layout sopra i 640px, così il pulsante
+              resta un figlio diretto del flex. */}
+          <span className="hidden sm:contents">
+            <BottoneLink href="/#richiesta" aspetto="contorno" misura="sm">
+              Richiedi
+            </BottoneLink>
+          </span>
         </div>
       </div>
 
@@ -250,16 +316,62 @@ export default function Header() {
             transition={{ duration: 0.2, ease: "easeOut" }}
             className="lg:hidden bg-[var(--ink)]/98 backdrop-blur-md border-t border-white/10 px-6 py-5 flex flex-col"
           >
-            {[...linkMobile, { label: account ? "Area personale" : "Accedi", href: account ? "/account" : "/account/login" }].map((l) => (
+            {linkMobile.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
                 onClick={() => setOpen(false)}
-                className="label text-white py-4 min-h-[44px] flex items-center border-b border-white/10 last:border-0 hover:text-[var(--champagne)] transition-colors duration-150"
+                className="label text-white py-4 min-h-[44px] flex items-center border-b border-white/10 hover:text-[var(--champagne)] transition-colors duration-150"
               >
                 {l.label}
               </Link>
             ))}
+
+            {/* I tre servizi, rientrati sotto "Catalogo": è l'equivalente
+                della tendina desktop. Su touch quella non si apre, e
+                senza queste righe da telefono il menu diceva "Catalogo"
+                e nient'altro. */}
+            <ul className="border-b border-white/10 py-2 pl-4 flex flex-col">
+              {servizi.map((s) => (
+                <li key={s.href}>
+                  <Link
+                    href={s.href}
+                    onClick={() => setOpen(false)}
+                    className={`py-3 min-h-[44px] flex flex-col justify-center transition-colors duration-150 ${
+                      pathname.startsWith(s.href)
+                        ? "text-[var(--champagne)]"
+                        : "text-white/85 hover:text-[var(--champagne)]"
+                    }`}
+                  >
+                    <span className="label">{s.label}</span>
+                    <span className="text-[11px] text-[var(--muted)] mt-1">{s.nota}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            <Link
+              href={account ? "/account" : "/account/login"}
+              onClick={() => setOpen(false)}
+              className="label text-white py-4 min-h-[44px] flex items-center hover:text-[var(--champagne)] transition-colors duration-150"
+            >
+              {account ? "Area personale" : "Accedi"}
+            </Link>
+
+            {/* In barra "Richiedi" compare solo da 640px in su: sotto,
+                l'unica azione del sito non stava da nessuna parte. Qui
+                c'è, e solo dove lì manca. Anche questo `sm:hidden` va
+                sul contenitore, non sul pulsante — stessa ragione. */}
+            <div className="sm:hidden mt-3">
+              <BottoneLink
+                href="/#richiesta"
+                aspetto="contorno"
+                misura="sm"
+                onClick={() => setOpen(false)}
+              >
+                Richiedi
+              </BottoneLink>
+            </div>
           </motion.nav>
         )}
       </AnimatePresence>
